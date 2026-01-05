@@ -13,17 +13,6 @@ export default function LoginPage() {
   const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
-  const handleLogin = () => {
-    if (!form.email || !form.password || !form.role) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    alert("Login Successful ✅");
-    console.log(form);
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-96 p-6 rounded-2xl bg-white border border-gray-300 shadow-lg">
@@ -73,7 +62,6 @@ export default function LoginPage() {
         {/* Login Button */}
         <button
           type="button"
-          onClick={handleLogin}
           className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold p-3 rounded transition duration-200"
         >
           Login
