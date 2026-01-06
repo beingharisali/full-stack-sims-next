@@ -4,9 +4,25 @@ import { useRouter } from "next/navigation";
 
 export default function AddProductPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  const [stock, setStock] = useState<number>(0);
+
+  const [name, setName] = useState<string>("");
+  const [price, setPrice] = useState<number | "">("");
+  const [stock, setStock] = useState<number | "">("");
+
+  // ✅ Generate unique ID considering default + stored products
+  const getNextId = (): number => {
+    const defaultProducts = [
+      { id: 1, name: "Laptop" },
+      { id: 2, name: "Mouse" },
+      { id: 3, name: "Keyboard" },
+    ];
+
+    const stored = localStorage.getItem("products");
+    const userProducts = stored ? JSON.parse(stored) : [];
+
+    const allProducts = [...defaultProducts, ...userProducts];
+    return allProducts.length ? Math.max(...allProducts.map((p: any) => p.id)) + 1 : 1;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,10 +31,10 @@ export default function AddProductPage() {
     const products = stored ? JSON.parse(stored) : [];
 
     const newProduct = {
-      id: products.length ? products[products.length - 1].id + 1 : 4, // start from 4
+      id: getNextId(), // ✅ always unique
       name,
-      price,
-      stock,
+      price: Number(price),
+      stock: Number(stock),
     };
 
     products.push(newProduct);
@@ -43,7 +59,7 @@ export default function AddProductPage() {
           type="number"
           placeholder="Price"
           value={price}
-          onChange={(e) => setPrice(Number(e.target.value))}
+          onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
           className="border p-2 rounded w-full"
           required
         />
@@ -51,7 +67,7 @@ export default function AddProductPage() {
           type="number"
           placeholder="Stock"
           value={stock}
-          onChange={(e) => setStock(Number(e.target.value))}
+          onChange={(e) => setStock(e.target.value === "" ? "" : Number(e.target.value))}
           className="border p-2 rounded w-full"
           required
         />

@@ -6,8 +6,8 @@ export default function AddSalePage() {
   const router = useRouter();
 
   const [product, setProduct] = useState("");
-  const [quantity, setQuantity] = useState<number>(0);
-  const [total, setTotal] = useState<number>(0);
+  const [quantity, setQuantity] = useState<number | "">("");
+  const [total, setTotal] = useState<number | "">("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +18,8 @@ export default function AddSalePage() {
     const newSale = {
       id: Date.now(),
       product,
-      quantity,
-      total,
+      quantity: Number(quantity),
+      total: Number(total),
     };
 
     const updated = [...sales, newSale];
@@ -37,23 +37,23 @@ export default function AddSalePage() {
           placeholder="Product"
           value={product}
           onChange={(e) => setProduct(e.target.value)}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
           required
         />
         <input
           type="number"
           placeholder="Quantity"
           value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          className="border p-2 w-full"
+          onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+          className="border p-2 w-full rounded"
           required
         />
         <input
           type="number"
           placeholder="Total"
           value={total}
-          onChange={(e) => setTotal(Number(e.target.value))}
-          className="border p-2 w-full"
+          onChange={(e) => setTotal(e.target.value === "" ? "" : Number(e.target.value))}
+          className="border p-2 w-full rounded"
           required
         />
 

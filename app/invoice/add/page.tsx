@@ -6,8 +6,8 @@ export default function AddInvoicePage() {
   const router = useRouter();
 
   const [customer, setCustomer] = useState("");
-  const [amount, setAmount] = useState<number>(0);
-  const [status, setStatus] = useState("Pending");
+  const [amount, setAmount] = useState<number | "">(""); // empty string for placeholder
+  const [status, setStatus] = useState(""); // empty string for placeholder
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,10 +15,15 @@ export default function AddInvoicePage() {
     const stored = localStorage.getItem("invoices");
     const invoices = stored ? JSON.parse(stored) : [];
 
-    const nextId =
-      invoices.length > 0 ? invoices[invoices.length - 1].id + 1 : 1;
+    const nextId = invoices.length > 0 ? invoices[invoices.length - 1].id + 1 : 1;
 
-    invoices.push({ id: nextId, customer, amount, status });
+    invoices.push({
+      id: nextId,
+      customer,
+      amount: Number(amount), // convert to number on save
+      status,
+    });
+
     localStorage.setItem("invoices", JSON.stringify(invoices));
 
     router.push("/invoice");
@@ -29,6 +34,7 @@ export default function AddInvoicePage() {
       <h2 className="text-2xl font-bold mb-4">Add Invoice</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Customer */}
         <input
           placeholder="Customer Name"
           value={customer}
@@ -37,22 +43,28 @@ export default function AddInvoicePage() {
           required
         />
 
+        {/* Amount */}
         <input
           type="number"
           placeholder="Amount"
           value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
+          onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
           className="border p-2 w-full rounded"
           required
         />
 
+        {/* Status with placeholder */}
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className="border p-2 w-full rounded"
+          required
         >
-          <option>Paid</option>
-          <option>Pending</option>
+          <option value="" disabled>
+            Select Status
+          </option>
+          <option value="Paid">Paid</option>
+          <option value="Pending">Pending</option>
         </select>
 
         <div className="flex gap-2">
