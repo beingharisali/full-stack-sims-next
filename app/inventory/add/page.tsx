@@ -5,7 +5,7 @@ import { useState } from "react";
 export default function AddInventoryPage() {
   const router = useRouter();
   const [product, setProduct] = useState("");
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState<number | "">(""); // empty string
   const [location, setLocation] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -16,7 +16,7 @@ export default function AddInventoryPage() {
     const newItem = {
       id: existing.length ? existing[existing.length - 1].id + 1 : 1,
       product,
-      quantity,
+      quantity: Number(quantity),
       location,
     };
 
@@ -43,7 +43,7 @@ export default function AddInventoryPage() {
           className="border p-2 w-full rounded"
           placeholder="Quantity"
           value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
+          onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
           required
         />
 

@@ -22,25 +22,25 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
 
   const [name, setName] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  const [stock, setStock] = useState<number>(0);
+  const [price, setPrice] = useState<number | "">("");
+  const [stock, setStock] = useState<number | "">("");
 
-  // LOAD PRODUCTS
+  // ✅ Helper to generate unique IDs
+  const getNextId = (products: Product[]) =>
+    products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1;
+
+  // ✅ Load products from localStorage + default
   useEffect(() => {
     const stored = localStorage.getItem("products");
-    if (stored) {
-      setProducts([...defaultProducts, ...JSON.parse(stored)]);
-    } else {
-      setProducts(defaultProducts);
-    }
+    const userProducts: Product[] = stored ? JSON.parse(stored) : [];
+    setProducts([...defaultProducts, ...userProducts]);
   }, []);
 
+  // ✅ Save products to localStorage (only user-added)
   const save = (data: Product[]) => {
     setProducts(data);
-    localStorage.setItem(
-      "products",
-      JSON.stringify(data.filter((p) => p.id > 3))
-    );
+    const userProducts = data.filter((p) => p.id > 3);
+    localStorage.setItem("products", JSON.stringify(userProducts));
   };
 
   const handleDelete = (id: number) => {
@@ -56,18 +56,25 @@ export default function ProductsPage() {
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editing) return;
 
     const updated = products.map((p) =>
-      p.id === editing?.id ? { ...p, name, price, stock } : p
+      p.id === editing.id
+        ? {
+            ...p,
+            name,
+            price: Number(price),
+            stock: Number(stock),
+          }
+        : p
     );
-
     save(updated);
     setEditing(null);
   };
 
   return (
     <div className="p-6">
-      {/* 🔝 TOP SUMMARY + ADD BUTTON */}
+      {/* TOP SUMMARY + ADD BUTTON */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
@@ -115,7 +122,7 @@ export default function ProductsPage() {
           <tbody>
             {products.map((p, index) => (
               <tr
-                key={p.id}
+                key={`${p.id}-${index}`} // ✅ unique key
                 className={`border-t ${
                   index % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } hover:bg-blue-50 transition`}
@@ -140,6 +147,13 @@ export default function ProductsPage() {
                 </td>
               </tr>
             ))}
+            {products.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-4 text-center text-gray-500">
+                  No products available
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -154,6 +168,8 @@ export default function ProductsPage() {
 
             <form onSubmit={handleUpdate} className="space-y-3">
               <input
+                type="text"
+                placeholder="Product Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="border p-2 w-full rounded"
@@ -161,15 +177,21 @@ export default function ProductsPage() {
               />
               <input
                 type="number"
+                placeholder="Price"
                 value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
+                onChange={(e) =>
+                  setPrice(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 className="border p-2 w-full rounded"
                 required
               />
               <input
                 type="number"
+                placeholder="Stock"
                 value={stock}
-                onChange={(e) => setStock(Number(e.target.value))}
+                onChange={(e) =>
+                  setStock(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 className="border p-2 w-full rounded"
                 required
               />
