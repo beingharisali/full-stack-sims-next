@@ -2,10 +2,14 @@
 import Link from "next/link";
 import "./globals.css"; // Tailwind base CSS, agar import kiya hai
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className="bg-gray-100 min-h-screen">
+      <body>
         {/* Navbar */}
         <nav className="bg-gray-800 text-white p-4 flex justify-between items-center">
           <div className="font-bold text-xl">My Dashboard</div>

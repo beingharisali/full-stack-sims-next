@@ -11,23 +11,16 @@ export default function AddInventoryPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const existing = JSON.parse(
-      localStorage.getItem("inventory") || "[]"
-    );
+    const existing = JSON.parse(localStorage.getItem("inventory") || "[]");
 
     const newItem = {
-      id: existing.length
-        ? existing[existing.length - 1].id + 1
-        : 1,
+      id: existing.length ? existing[existing.length - 1].id + 1 : 1,
       product,
       quantity,
       location,
     };
 
-    localStorage.setItem(
-      "inventory",
-      JSON.stringify([...existing, newItem])
-    );
+    localStorage.setItem("inventory", JSON.stringify([...existing, newItem]));
 
     router.push("/inventory");
   };
