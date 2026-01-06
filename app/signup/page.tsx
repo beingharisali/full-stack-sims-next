@@ -2,6 +2,8 @@
 
 import { useState, ChangeEvent } from "react";
 import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const [form, setForm] = useState({
@@ -18,109 +20,113 @@ export default function Page() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    if (
-      !form.firstName ||
-      !form.lastName ||
-      !form.email ||
-      !form.password ||
-      !form.role
-    ) {
-      alert("Please fill all fields");
+  const router = useRouter();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.role) {
+      alert("Please select a role first!");
       return;
     }
-    alert("Signup Successful ✅");
-  };
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/auth/register",
+        form
+      );
+      console.log(res.data);
+      alert("User registered successfully!");
+      router.push("/");
+    } catch (error: any) {
+      alert(error.response?.data?.msg || "Registration failed");
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-96 p-6 rounded-2xl bg-white border border-gray-300 shadow-lg">
-        <h2 className="text-2xl font-bold mb-5 text-gray-800">
-          Sign Up Here
-        </h2>
+        <h2 className="text-2xl font-bold mb-5 text-gray-800">Sign Up Here</h2>
+        <form onSubmit={handleSubmit}>
+          {/* First Name */}
+          <div className="mb-3">
+            <label className="block mb-1 font-semibold text-black">
+              First Name
+            </label>
+            <input
+              name="firstName"
+              type="text"
+              value={form.firstName}
+              placeholder="First Name"
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
 
-        {/* First Name */}
-        <div className="mb-3">
-          <label className="block mb-1 font-semibold text-black">
-            First Name
-          </label>
-          <input
-            name="firstName"
-            type="text"
-            placeholder="First Name"
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
+          {/* Last Name */}
+          <div className="mb-3">
+            <label className="block mb-1 font-semibold text-black">
+              Last Name
+            </label>
+            <input
+              name="lastName"
+              type="text"
+              placeholder="Last Name"
+              value={form.lastName}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
 
-        {/* Last Name */}
-        <div className="mb-3">
-          <label className="block mb-1 font-semibold text-black">
-            Last Name
-          </label>
-          <input
-            name="lastName"
-            type="text"
-            placeholder="Last Name"
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
+          {/* Email */}
+          <div className="mb-3">
+            <label className="block mb-1 font-semibold text-black">Email</label>
+            <input
+              name="email"
+              type="email"
+              placeholder="rehanali@gmail.com"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
 
-        {/* Email */}
-        <div className="mb-3">
-          <label className="block mb-1 font-semibold text-black">
-            Email
-          </label>
-          <input
-            name="email"
-            type="email"
-            placeholder="rehanali@gmail.com"
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
+          {/* Password */}
+          <div className="mb-3">
+            <label className="block mb-1 font-semibold text-black">
+              Password
+            </label>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              placeholder="*********"
+              onChange={handleChange}
+              className="w-full border border-gray-300  p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
 
-        {/* Password */}
-        <div className="mb-3">
-          <label className="block mb-1 font-semibold text-black">
-            Password
-          </label>
-          <input
-            name="password"
-            type="password"
-            placeholder="*********"
-            onChange={handleChange}
-            className="w-full border border-gray-300  p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
+          {/* Role */}
+          <div className="mb-5">
+            <label className="block mb-1 font-semibold text-black">Role</label>
+            <select
+              name="role"
+              onChange={handleChange}
+              value={form.role}
+              className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="">Select Role</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+              <option value="sales">Sales</option>
+            </select>
+          </div>
 
-        {/* Role */}
-        <div className="mb-5">
-          <label className="block mb-1 font-semibold text-black">
-            Role
-          </label>
-          <select
-            name="role"
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="flex mx-auto text-center text-white bg-blue-500 border-0 py-2 px-10 focus:outline-none hover:bg-blue-900 rounded-lg text-lg transition duration-200 disabled:opacity-50"
           >
-            <option value="">Select Role</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-            <option value="agent">Agent</option>
-          </select>
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold p-3 rounded transition duration-200"
-        >
-          Register
-        </button>
-
+            Register
+          </button>
+        </form>
         {/* Login Link */}
         <p className="text-center mt-3 text-gray-600 text-sm">
           Already have an account?{" "}
