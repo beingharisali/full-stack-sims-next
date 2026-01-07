@@ -13,17 +13,14 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
 
-  // ❌ Hide navbar/sidebar/footer on signup page
-  const hideLayout = pathname === "/signup";
+  // ❌ Hide layout on login & signup pages
+  const hideLayout =
+    pathname === "/" ||
+    pathname === "/signup";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-gray-100 min-h-screen flex flex-col">
         {/* Navbar */}
         {!hideLayout && <Navbar />}
 
