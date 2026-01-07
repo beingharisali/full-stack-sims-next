@@ -34,7 +34,7 @@ export default function Page() {
       );
       console.log(res.data);
       alert("User registered successfully!");
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       alert(error.response?.data?.msg || "Registration failed");
     }
@@ -81,7 +81,7 @@ export default function Page() {
             <input
               name="email"
               type="email"
-              placeholder="rehanali@gmail.com"
+              placeholder="abc@gmail.com"
               value={form.email}
               onChange={handleChange}
               className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
