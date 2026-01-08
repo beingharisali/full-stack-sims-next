@@ -16,7 +16,7 @@ export default function RootLayout({
   // ❌ Hide layout on login & signup pages
   const hideLayout =
     pathname === "/" ||
-    // pathname === "/saler" ||
+    pathname === "/Sale" ||
     pathname === "/manger" ||
     pathname === "/signup";
 
