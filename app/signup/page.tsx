@@ -34,7 +34,16 @@ export default function Page() {
       );
       console.log(res.data);
       alert("User registered successfully!");
-      router.push("/dashboard");
+
+      if (form.role === "admin") {
+        router.push("/dashboard");
+      } else if (form.role === "manager") {
+        router.push("/manager");
+      } else if (form.role === "sales") {
+        router.push("/Sale");
+      } else {
+        router.push("/");
+      }
     } catch (error: any) {
       alert(error.response?.data?.msg || "Registration failed");
     }
@@ -45,11 +54,8 @@ export default function Page() {
       <div className="w-96 p-6 rounded-2xl bg-white border border-gray-300 shadow-lg">
         <h2 className="text-2xl font-bold mb-5 text-gray-800">Sign Up Here</h2>
         <form onSubmit={handleSubmit}>
-          {/* First Name */}
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">
-              First Name
-            </label>
+            <label className="block mb-1 font-semibold text-black">First Name</label>
             <input
               name="firstName"
               type="text"
@@ -60,11 +66,8 @@ export default function Page() {
             />
           </div>
 
-          {/* Last Name */}
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">
-              Last Name
-            </label>
+            <label className="block mb-1 font-semibold text-black">Last Name</label>
             <input
               name="lastName"
               type="text"
@@ -75,7 +78,6 @@ export default function Page() {
             />
           </div>
 
-          {/* Email */}
           <div className="mb-3">
             <label className="block mb-1 font-semibold text-black">Email</label>
             <input
@@ -88,22 +90,18 @@ export default function Page() {
             />
           </div>
 
-          {/* Password */}
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">
-              Password
-            </label>
+            <label className="block mb-1 font-semibold text-black">Password</label>
             <input
               name="password"
               type="password"
               value={form.password}
               placeholder="*********"
               onChange={handleChange}
-              className="w-full border border-gray-300  p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
 
-          {/* Role */}
           <div className="mb-5">
             <label className="block mb-1 font-semibold text-black">Role</label>
             <select
@@ -119,7 +117,6 @@ export default function Page() {
             </select>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="flex mx-auto text-center text-white bg-blue-500 border-0 py-2 px-10 focus:outline-none hover:bg-blue-900 rounded-lg text-lg transition duration-200 disabled:opacity-50"
@@ -127,7 +124,7 @@ export default function Page() {
             Register
           </button>
         </form>
-        {/* Login Link */}
+
         <p className="text-center mt-3 text-gray-600 text-sm">
           Already have an account?{" "}
           <Link href="/" className="text-sky-500 hover:underline font-semibold">

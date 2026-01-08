@@ -33,12 +33,22 @@ export default function LoginPage() {
       );
       console.log(res.data);
       alert("Logged in Successfully!");
-      router.push("/dashboard");
+
+      if (form.role === "admin") {
+        router.push("/dashboard");
+      } else if (form.role === "manager") {
+        router.push("/manager");
+      } else if (form.role === "sales") {
+        router.push("/Sale");
+      } else {
+        router.push("/");
+      }
     } catch (error: any) {
       alert(error.response?.data?.msg || "Login failed");
       console.error(error);
     }
   };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-96 p-6 rounded-2xl bg-white border border-gray-300 shadow-lg">
@@ -49,6 +59,7 @@ export default function LoginPage() {
             <input
               name="email"
               type="email"
+              value={form.email}
               placeholder="abc@gmail.com"
               className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
               onChange={handleChange}
@@ -62,6 +73,7 @@ export default function LoginPage() {
             <input
               name="password"
               type="password"
+              value={form.password}
               placeholder="*********"
               className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
               onChange={handleChange}
