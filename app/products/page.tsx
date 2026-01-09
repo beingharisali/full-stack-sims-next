@@ -25,18 +25,18 @@ export default function ProductsPage() {
   const [price, setPrice] = useState<number | "">("");
   const [stock, setStock] = useState<number | "">("");
 
-  // ✅ Helper to generate unique IDs
+  
   const getNextId = (products: Product[]) =>
     products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1;
 
-  // ✅ Load products from localStorage + default
+  
   useEffect(() => {
     const stored = localStorage.getItem("products");
     const userProducts: Product[] = stored ? JSON.parse(stored) : [];
     setProducts([...defaultProducts, ...userProducts]);
   }, []);
 
-  // ✅ Save products to localStorage (only user-added)
+  
   const save = (data: Product[]) => {
     setProducts(data);
     const userProducts = data.filter((p) => p.id > 3);
@@ -74,7 +74,7 @@ export default function ProductsPage() {
 
   return (
     <div className="p-6">
-      {/* TOP SUMMARY + ADD BUTTON */}
+     
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
@@ -97,7 +97,6 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      {/* TABLE */}
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <table className="min-w-full border-collapse">
           <thead className="bg-gray-100">
@@ -122,7 +121,7 @@ export default function ProductsPage() {
           <tbody>
             {products.map((p, index) => (
               <tr
-                key={`${p.id}-${index}`} // ✅ unique key
+                key={`${p.id}-${index}`} 
                 className={`border-t ${
                   index % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } hover:bg-blue-50 transition`}
@@ -158,7 +157,7 @@ export default function ProductsPage() {
         </table>
       </div>
 
-      {/* EDIT MODAL */}
+     
       {editing && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">

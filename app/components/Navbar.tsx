@@ -14,7 +14,9 @@ export default function Navbar() {
     <nav className="bg-gray-800 text-white px-6 py-4 flex items-center">
       {/* Left */}
       <div className="font-bold text-xl w-1/4">
+      <Link href= "/dashboard">
         My Dashboard
+        </Link>
       </div>
 
       {/* Center */}

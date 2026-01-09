@@ -20,14 +20,14 @@ export default function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
 
-  // 🔹 LOAD INVENTORY (default + added)
+  
   useEffect(() => {
     const stored = localStorage.getItem("inventory");
 
     if (stored) {
       const parsed = JSON.parse(stored);
 
-      // agar empty array ho to default wapas lao
+     
       if (parsed.length === 0) {
         setItems(DEFAULT_INVENTORY);
         localStorage.setItem(
@@ -46,7 +46,6 @@ export default function InventoryPage() {
     }
   }, []);
 
-  // 🔹 SAVE ON EVERY CHANGE
   useEffect(() => {
     if (items.length > 0) {
       localStorage.setItem("inventory", JSON.stringify(items));
@@ -68,7 +67,7 @@ export default function InventoryPage() {
 
   return (
     <div>
-      {/* TOP SECTION */}
+      
       <div className="mb-6 flex items-center justify-between">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
@@ -91,7 +90,7 @@ export default function InventoryPage() {
         </button>
       </div>
 
-      {/* TABLE */}
+     
       <div className="overflow-x-auto bg-white shadow rounded">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -130,7 +129,6 @@ export default function InventoryPage() {
         </table>
       </div>
 
-      {/* EDIT POPUP (NO BLACK BACKGROUND) */}
       {editItem && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white w-[420px] p-6 rounded shadow-lg">
