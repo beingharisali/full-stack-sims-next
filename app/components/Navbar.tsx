@@ -12,14 +12,13 @@ export default function Navbar() {
 
   return (
     <nav className="bg-gray-800 text-white px-6 py-4 flex items-center">
-      {/* Left */}
+     
       <div className="font-bold text-xl w-1/4">
       <Link href= "/dashboard">
         My Dashboard
         </Link>
       </div>
 
-      {/* Center */}
       <div className="flex justify-center gap-8 w-2/4">
         {[
           { name: "Products", href: "/products" },
@@ -37,7 +36,6 @@ export default function Navbar() {
         ))}
       </div>
 
-      {/* Right */}
       <div className="flex justify-end w-1/4">
         <button
           onClick={handleLogout}

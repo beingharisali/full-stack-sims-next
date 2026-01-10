@@ -63,7 +63,7 @@ export default function InvoicePage() {
 
   return (
     <div className="p-6">
-      {/* 🔝 TOP SUMMARY + ADD BUTTON */}
+      
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
@@ -86,7 +86,7 @@ export default function InvoicePage() {
         </button>
       </div>
 
-      {/* TABLE */}
+      
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <table className="min-w-full border-collapse">
           <thead className="bg-gray-100">
@@ -140,7 +140,7 @@ export default function InvoicePage() {
         </table>
       </div>
 
-      {/* EDIT MODAL */}
+      
       {editing && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">

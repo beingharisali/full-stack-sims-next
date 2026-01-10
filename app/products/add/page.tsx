@@ -9,7 +9,7 @@ export default function AddProductPage() {
   const [price, setPrice] = useState<number | "">("");
   const [stock, setStock] = useState<number | "">("");
 
-  // ✅ Generate unique ID considering default + stored products
+
   const getNextId = (): number => {
     const defaultProducts = [
       { id: 1, name: "Laptop" },
@@ -31,7 +31,7 @@ export default function AddProductPage() {
     const products = stored ? JSON.parse(stored) : [];
 
     const newProduct = {
-      id: getNextId(), // ✅ always unique
+      id: getNextId(), 
       name,
       price: Number(price),
       stock: Number(stock),
