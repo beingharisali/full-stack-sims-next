@@ -6,8 +6,8 @@ export default function AddInvoicePage() {
   const router = useRouter();
 
   const [customer, setCustomer] = useState("");
-  const [amount, setAmount] = useState<number | "">(""); // empty string for placeholder
-  const [status, setStatus] = useState(""); // empty string for placeholder
+  const [amount, setAmount] = useState<number | "">(""); 
+  const [status, setStatus] = useState(""); 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +20,7 @@ export default function AddInvoicePage() {
     invoices.push({
       id: nextId,
       customer,
-      amount: Number(amount), // convert to number on save
+      amount: Number(amount), 
       status,
     });
 
@@ -34,7 +34,7 @@ export default function AddInvoicePage() {
       <h2 className="text-2xl font-bold mb-4">Add Invoice</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Customer */}
+       
         <input
           placeholder="Customer Name"
           value={customer}
@@ -43,7 +43,7 @@ export default function AddInvoicePage() {
           required
         />
 
-        {/* Amount */}
+        
         <input
           type="number"
           placeholder="Amount"
@@ -53,7 +53,7 @@ export default function AddInvoicePage() {
           required
         />
 
-        {/* Status with placeholder */}
+        
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}

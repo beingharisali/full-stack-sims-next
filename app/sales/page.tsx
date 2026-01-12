@@ -21,7 +21,7 @@ export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [editSale, setEditSale] = useState<Sale | null>(null);
 
-  // LOAD SALES
+  
   useEffect(() => {
     const stored = localStorage.getItem("sales");
     if (stored) {
@@ -32,14 +32,14 @@ export default function SalesPage() {
     }
   }, []);
 
-  // DELETE SALE (NO ALERT)
+ 
   const handleDelete = (id: number) => {
     const updated = sales.filter((s) => s.id !== id);
     setSales(updated);
     localStorage.setItem("sales", JSON.stringify(updated));
   };
 
-  // UPDATE SALE
+ 
   const handleUpdate = () => {
     if (!editSale) return;
 
@@ -56,7 +56,7 @@ export default function SalesPage() {
 
   return (
     <div className="p-6">
-      {/* TOP SUMMARY */}
+     
       <div className="mb-6 flex items-center justify-between">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
@@ -79,7 +79,7 @@ export default function SalesPage() {
         </button>
       </div>
 
-      {/* TABLE */}
+      
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <table className="min-w-full border-collapse">
           <thead className="bg-gray-100">
@@ -124,7 +124,7 @@ export default function SalesPage() {
                 </td>
                 <td className="px-6 py-3">
                   <div className="flex justify-center gap-2">
-                    {/* EDIT → DIRECT MODAL */}
+                    
                     <button
                       onClick={() => setEditSale(sale)}
                       className="px-3 py-1 text-sm rounded bg-teal-600 text-white hover:bg-teal-700"
@@ -132,7 +132,7 @@ export default function SalesPage() {
                       Edit
                     </button>
 
-                    {/* DELETE → DIRECT */}
+                    
                     <button
                       onClick={() => handleDelete(sale.id)}
                       className="px-3 py-1 text-sm rounded bg-slate-500 text-white hover:bg-slate-600"
@@ -153,7 +153,7 @@ export default function SalesPage() {
         )}
       </div>
 
-      {/* EDIT MODAL */}
+      
       {editSale && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6">

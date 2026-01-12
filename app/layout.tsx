@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
 
-  // ❌ Hide layout on login & signup pages
+  
   const hideLayout =
     pathname === "/" ||
     pathname === "/signup";
@@ -21,18 +21,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gray-100 min-h-screen flex flex-col">
-        {/* Navbar */}
+        
         {!hideLayout && <Navbar />}
 
         <div className="flex flex-1">
-          {/* Sidebar */}
+          
           {!hideLayout && <Sidebar />}
 
-          {/* Main Content */}
+          
           <main className="flex-1 p-6">{children}</main>
         </div>
 
-        {/* Footer */}
+        
         {!hideLayout && <Footer />}
       </body>
     </html>
