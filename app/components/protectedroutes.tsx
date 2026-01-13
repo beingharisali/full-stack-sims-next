@@ -14,14 +14,18 @@ export default function ProtectedRoute({ children, role }: Props) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
-      router.push("/");
-    } else if (role && user.role !== role) {
-      router.push("/unauthorized");
+    if (user && role && user.role !== role) {
+      router.replace("/unauthorized");
     }
   }, [user, role, router]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="text-center mt-20 text-gray-600">
+        Please login to continue
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }
