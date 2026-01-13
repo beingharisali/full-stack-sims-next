@@ -1,5 +1,7 @@
+"use client";
+
 import "./globals.css";
-import AppShell from "./appshell"; 
+import { AuthProvider } from "./context/AuthContext";
 
 export default function RootLayout({
   children,
@@ -8,8 +10,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-100 min-h-screen">
-        <AppShell>{children}</AppShell>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

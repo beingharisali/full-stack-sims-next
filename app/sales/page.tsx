@@ -1,7 +1,9 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// Sale type
 type Sale = {
   id: number;
   product: string;
@@ -9,6 +11,7 @@ type Sale = {
   total: number;
 };
 
+// Default sales data
 const DEFAULT_SALES: Sale[] = [
   { id: 1, product: "Laptop", quantity: 2, total: 2400 },
   { id: 2, product: "Mouse", quantity: 5, total: 100 },
@@ -21,7 +24,7 @@ export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [editSale, setEditSale] = useState<Sale | null>(null);
 
-  
+  // Load sales data
   useEffect(() => {
     const stored = localStorage.getItem("sales");
     if (stored) {
@@ -32,14 +35,14 @@ export default function SalesPage() {
     }
   }, []);
 
- 
+  // Delete sale
   const handleDelete = (id: number) => {
     const updated = sales.filter((s) => s.id !== id);
     setSales(updated);
     localStorage.setItem("sales", JSON.stringify(updated));
   };
 
- 
+  // Update sale
   const handleUpdate = () => {
     if (!editSale) return;
 
@@ -49,174 +52,99 @@ export default function SalesPage() {
 
     setSales(updated);
     localStorage.setItem("sales", JSON.stringify(updated));
-
-    alert("Sale updated successfully ✅");
     setEditSale(null);
   };
 
   return (
     <div className="p-6">
-     
-      <div className="mb-6 flex items-center justify-between">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white p-4 shadow rounded">
-            <h2 className="text-gray-500">Total Sales</h2>
-            <p className="text-2xl font-bold">{sales.length}</p>
-          </div>
-          <div className="bg-white p-4 shadow rounded">
-            <h2 className="text-gray-500">Total Revenue</h2>
-            <p className="text-2xl font-bold">
-              ${sales.reduce((a, b) => a + b.total, 0)}
-            </p>
-          </div>
-        </div>
+      <h1 className="text-2xl font-bold mb-4">Sales Dashboard</h1>
 
-        <button
-          onClick={() => router.push("/sales/add")}
-          className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
-        >
-          Add Sale
-        </button>
-      </div>
+      <button
+        onClick={() => router.push("/sales/add")}
+        className="mb-4 bg-teal-600 text-white px-4 py-2 rounded"
+      >
+        Add Sale
+      </button>
 
-      
-      <div className="bg-white shadow-md rounded-xl overflow-hidden">
-        <table className="min-w-full border-collapse">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                Product
-              </th>
-              <th className="px-6 py-3 text-center text-sm font-semibold text-gray-600">
-                Quantity
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600">
-                Total
-              </th>
-              <th className="px-6 py-3 text-center text-sm font-semibold text-gray-600">
-                Actions
-              </th>
+      <table className="w-full border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th>ID</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {sales.map((sale) => (
+            <tr key={sale.id} className="border-t">
+              <td>{sale.id}</td>
+              <td>{sale.product}</td>
+              <td>{sale.quantity}</td>
+              <td>${sale.total}</td>
+              <td className="flex gap-2">
+                <button
+                  onClick={() => setEditSale(sale)}
+                  className="px-2 py-1 bg-blue-500 text-white rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(sale.id)}
+                  className="px-2 py-1 bg-red-500 text-white rounded"
+                >
+                  Delete
+                </button>
+              </td>
             </tr>
-          </thead>
+          ))}
+        </tbody>
+      </table>
 
-          <tbody>
-            {sales.map((sale, index) => (
-              <tr
-                key={sale.id}
-                className={`border-t ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                } hover:bg-blue-50 transition`}
-              >
-                <td className="px-6 py-3 text-sm text-gray-700">
-                  {sale.id}
-                </td>
-                <td className="px-6 py-3 text-sm font-medium text-gray-800">
-                  {sale.product}
-                </td>
-                <td className="px-6 py-3 text-sm text-center">
-                  {sale.quantity}
-                </td>
-                <td className="px-6 py-3 text-sm text-right font-semibold">
-                  ${sale.total}
-                </td>
-                <td className="px-6 py-3">
-                  <div className="flex justify-center gap-2">
-                    
-                    <button
-                      onClick={() => setEditSale(sale)}
-                      className="px-3 py-1 text-sm rounded bg-teal-600 text-white hover:bg-teal-700"
-                    >
-                      Edit
-                    </button>
-
-                    
-                    <button
-                      onClick={() => handleDelete(sale.id)}
-                      className="px-3 py-1 text-sm rounded bg-slate-500 text-white hover:bg-slate-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {sales.length === 0 && (
-          <p className="text-center py-6 text-gray-500">
-            No sales found
-          </p>
-        )}
-      </div>
-
-      
       {editSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
-          <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6">
-            <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-              Edit Sale
-            </h2>
+        <div className="mt-6">
+          <h2 className="font-semibold mb-2">Edit Sale</h2>
 
-            <div className="mb-3">
-              <label className="text-sm text-gray-600">Product</label>
-              <input
-                className="border p-2 w-full rounded mt-1"
-                value={editSale.product}
-                onChange={(e) =>
-                  setEditSale({ ...editSale, product: e.target.value })
-                }
-              />
-            </div>
+          <input
+            className="border p-2 mr-2"
+            value={editSale.product}
+            onChange={(e) =>
+              setEditSale({ ...editSale, product: e.target.value })
+            }
+          />
 
-            <div className="mb-3">
-              <label className="text-sm text-gray-600">Quantity</label>
-              <input
-                type="number"
-                className="border p-2 w-full rounded mt-1"
-                value={editSale.quantity}
-                onChange={(e) =>
-                  setEditSale({
-                    ...editSale,
-                    quantity: Number(e.target.value),
-                  })
-                }
-              />
-            </div>
+          <input
+            type="number"
+            className="border p-2 mr-2"
+            value={editSale.quantity}
+            onChange={(e) =>
+              setEditSale({
+                ...editSale,
+                quantity: Number(e.target.value),
+              })
+            }
+          />
 
-            <div className="mb-4">
-              <label className="text-sm text-gray-600">Total</label>
-              <input
-                type="number"
-                className="border p-2 w-full rounded mt-1"
-                value={editSale.total}
-                onChange={(e) =>
-                  setEditSale({
-                    ...editSale,
-                    total: Number(e.target.value),
-                  })
-                }
-              />
-            </div>
+          <input
+            type="number"
+            className="border p-2 mr-2"
+            value={editSale.total}
+            onChange={(e) =>
+              setEditSale({
+                ...editSale,
+                total: Number(e.target.value),
+              })
+            }
+          />
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setEditSale(null)}
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-              >
-                Update
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={handleUpdate}
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Update
+          </button>
         </div>
       )}
     </div>
