@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// Sale type
 type Sale = {
   id: number;
   product: string;
@@ -11,140 +10,199 @@ type Sale = {
   total: number;
 };
 
-// Default sales data
 const DEFAULT_SALES: Sale[] = [
   { id: 1, product: "Laptop", quantity: 2, total: 2400 },
   { id: 2, product: "Mouse", quantity: 5, total: 100 },
   { id: 3, product: "Keyboard", quantity: 3, total: 150 },
-  { id: 4, product: "Monitor", quantity: 1, total: 300 },
 ];
 
 export default function SalesPage() {
   const router = useRouter();
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [editSale, setEditSale] = useState<Sale | null>(null);
 
-  // Load sales data
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [editing, setEditing] = useState<Sale | null>(null);
+
+  const [product, setProduct] = useState("");
+  const [quantity, setQuantity] = useState<number | "">("");
+  const [total, setTotal] = useState<number | "">("");
+
+  // Load sales
   useEffect(() => {
     const stored = localStorage.getItem("sales");
-    if (stored) {
-      setSales(JSON.parse(stored));
-    } else {
-      setSales(DEFAULT_SALES);
-      localStorage.setItem("sales", JSON.stringify(DEFAULT_SALES));
-    }
+    setSales(stored ? JSON.parse(stored) : DEFAULT_SALES);
   }, []);
 
-  // Delete sale
-  const handleDelete = (id: number) => {
-    const updated = sales.filter((s) => s.id !== id);
-    setSales(updated);
-    localStorage.setItem("sales", JSON.stringify(updated));
+  const save = (data: Sale[]) => {
+    setSales(data);
+    localStorage.setItem("sales", JSON.stringify(data));
   };
 
-  // Update sale
-  const handleUpdate = () => {
-    if (!editSale) return;
+  const handleDelete = (id: number) => {
+    save(sales.filter((s) => s.id !== id));
+  };
+
+  const handleEdit = (sale: Sale) => {
+    setEditing(sale);
+    setProduct(sale.product);
+    setQuantity(sale.quantity);
+    setTotal(sale.total);
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
 
     const updated = sales.map((s) =>
-      s.id === editSale.id ? editSale : s
+      s.id === editing.id
+        ? { ...s, product, quantity: Number(quantity), total: Number(total) }
+        : s
     );
 
-    setSales(updated);
-    localStorage.setItem("sales", JSON.stringify(updated));
-    setEditSale(null);
+    save(updated);
+    setEditing(null);
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Sales Dashboard</h1>
+      {/* Top Summary */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white p-4 shadow rounded">
+            <h2 className="text-gray-500">Total Sales</h2>
+            <p className="text-2xl font-bold">{sales.length}</p>
+          </div>
+          <div className="bg-white p-4 shadow rounded">
+            <h2 className="text-gray-500">Total Revenue</h2>
+            <p className="text-2xl font-bold">
+              ${sales.reduce((a, b) => a + b.total, 0)}
+            </p>
+          </div>
+        </div>
 
-      <button
-        onClick={() => router.push("/sales/add")}
-        className="mb-4 bg-teal-600 text-white px-4 py-2 rounded"
-      >
-        Add Sale
-      </button>
+        <button
+          onClick={() => router.push("/sales/add")}
+          className="bg-teal-600 text-white px-5 py-2 rounded hover:bg-teal-700 h-fit"
+        >
+          Add Sale
+        </button>
+      </div>
 
-      <table className="w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th>ID</th>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Total</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {sales.map((sale) => (
-            <tr key={sale.id} className="border-t">
-              <td>{sale.id}</td>
-              <td>{sale.product}</td>
-              <td>{sale.quantity}</td>
-              <td>${sale.total}</td>
-              <td className="flex gap-2">
-                <button
-                  onClick={() => setEditSale(sale)}
-                  className="px-2 py-1 bg-blue-500 text-white rounded"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(sale.id)}
-                  className="px-2 py-1 bg-red-500 text-white rounded"
-                >
-                  Delete
-                </button>
-              </td>
+      {/* Table */}
+      <div className="bg-white shadow-md rounded-xl overflow-hidden">
+        <table className="min-w-full border-collapse">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-3 text-left text-sm font-semibold text-gray-600">
+                ID
+              </th>
+              <th className="p-3 text-left text-sm font-semibold text-gray-600">
+                Product
+              </th>
+              <th className="p-3 text-center text-sm font-semibold text-gray-600">
+                Quantity
+              </th>
+              <th className="p-3 text-right text-sm font-semibold text-gray-600">
+                Total
+              </th>
+              <th className="p-3 text-center text-sm font-semibold text-gray-600">
+                Actions
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
 
-      {editSale && (
-        <div className="mt-6">
-          <h2 className="font-semibold mb-2">Edit Sale</h2>
+          <tbody>
+            {sales.map((s, index) => (
+              <tr
+                key={`${s.id}-${index}`}
+                className={`border-t ${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                } hover:bg-blue-50 transition`}
+              >
+                <td className="p-3">{s.id}</td>
+                <td className="p-3 font-medium">{s.product}</td>
+                <td className="p-3 text-center">{s.quantity}</td>
+                <td className="p-3 text-right font-semibold">${s.total}</td>
+                <td className="p-3 text-center space-x-2">
+                  <button
+                    onClick={() => handleEdit(s)}
+                    className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
 
-          <input
-            className="border p-2 mr-2"
-            value={editSale.product}
-            onChange={(e) =>
-              setEditSale({ ...editSale, product: e.target.value })
-            }
-          />
+            {sales.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-4 text-center text-gray-500">
+                  No sales available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-          <input
-            type="number"
-            className="border p-2 mr-2"
-            value={editSale.quantity}
-            onChange={(e) =>
-              setEditSale({
-                ...editSale,
-                quantity: Number(e.target.value),
-              })
-            }
-          />
+      {/* Edit Modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
+            <h2 className="text-xl font-semibold mb-4 border-b pb-2">
+              Edit Sale
+            </h2>
 
-          <input
-            type="number"
-            className="border p-2 mr-2"
-            value={editSale.total}
-            onChange={(e) =>
-              setEditSale({
-                ...editSale,
-                total: Number(e.target.value),
-              })
-            }
-          />
+            <form onSubmit={handleUpdate} className="space-y-3">
+              <input
+                type="text"
+                value={product}
+                onChange={(e) => setProduct(e.target.value)}
+                className="border p-2 w-full rounded"
+                required
+              />
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) =>
+                  setQuantity(
+                    e.target.value === "" ? "" : Number(e.target.value)
+                  )
+                }
+                className="border p-2 w-full rounded"
+                required
+              />
+              <input
+                type="number"
+                value={total}
+                onChange={(e) =>
+                  setTotal(
+                    e.target.value === "" ? "" : Number(e.target.value)
+                  )
+                }
+                className="border p-2 w-full rounded"
+                required
+              />
 
-          <button
-            onClick={handleUpdate}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Update
-          </button>
+              <div className="flex justify-end gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                  Update
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

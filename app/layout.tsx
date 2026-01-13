@@ -1,17 +1,35 @@
 "use client";
 
 import "./globals.css";
-import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import Footer from "./components/Footer";
+import { usePathname } from "next/navigation";
+import { AuthProvider } from "./context/authcontext";
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  // signup aur landing page par navbar/sidebar/footer hide
+  const hideLayout = pathname === "/" || pathname === "/signup";
+
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>{children}</AuthProvider>
+      <body className="bg-gray-100 min-h-screen flex flex-col">
+        <AuthProvider>
+          {!hideLayout && <Navbar />}
+
+          <div className="flex flex-1">
+            {!hideLayout && <Sidebar />}
+            <main className="flex-1 p-6">{children}</main>
+          </div>
+
+          {!hideLayout && <Footer />}
+        </AuthProvider>
       </body>
     </html>
   );

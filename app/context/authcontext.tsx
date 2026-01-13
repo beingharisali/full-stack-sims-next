@@ -1,45 +1,34 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, useState } from "react";
 
 type User = {
-  role: "admin" | "sales" | null;
+  role: "admin" | "sales";
 };
 
 type AuthContextType = {
   user: User | null;
-  login: (role: "admin" | "sales") => void;
+  login: (user: User) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
 
-  const login = (role: "admin" | "sales") => {
-    setUser({ role });
-    router.push(role === "admin" ? "/admin" : "/sales");
-  };
-
-  const logout = () => {
-    setUser(null);
-    router.push("/login");
-  };
+  const login = (user: User) => setUser(user);
+  const logout = () => setUser(null);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used inside AuthProvider");
   return context;
 };
