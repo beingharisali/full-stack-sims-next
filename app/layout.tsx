@@ -14,7 +14,6 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
 
-  // signup aur landing page par navbar/sidebar/footer hide
   const hideLayout = pathname === "/" || pathname === "/signup";
 
   return (
