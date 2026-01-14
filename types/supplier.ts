@@ -1,7 +1,6 @@
 export interface Supplier {
-  id: string;
+  supplierGroup: String;
   name: string;
-  supplierGroup : string;
   contactnumber: string;
   status: string;
  category: String;
