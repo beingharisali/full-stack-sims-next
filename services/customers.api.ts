@@ -30,3 +30,8 @@ export async function updateCustomer(
     const res=await http.put("/update/${id}",{name,city,contactnumber,status,category})
 return res.data    
 }
+export async function deleteCustomer(id:string):Promise<{customer:Customers}> {
+    const res= await http.delete("/delete/${id}")
+    return res.data
+    
+}
