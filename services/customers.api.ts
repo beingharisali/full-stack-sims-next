@@ -11,12 +11,12 @@ export async function createCustomer(
     const res =await http.post("/create",{name,city,contactnumber,status,category})
     return res.data;
 }
-export async function getCustomer():Promise<{customer:Customers}> {
+export async function getCustomer():Promise<{customers:Customers[]}> {
 const res =await http.get("/get");
 return res.data    
 }
 export async function getSingleCustomer(id:string):Promise<{customer:Customers}>{
-    const res =await http.get("/get/${id}");
+    const res =await http.get(`/get/${id}`);
     return res.data
 }
 export async function updateCustomer(
@@ -27,11 +27,11 @@ export async function updateCustomer(
  category: "wholesale" | "individual",
  id:string
 ):Promise<{customer:Customers}> {
-    const res=await http.put("/update/${id}",{name,city,contactnumber,status,category})
+    const res=await http.put(`/update/${id}`,{name,city,contactnumber,status,category})
 return res.data    
 }
 export async function deleteCustomer(id:string):Promise<{customer:Customers}> {
-    const res= await http.delete("/delete/${id}")
+    const res= await http.delete(`/delete/${id}`)
     return res.data
     
 }
