@@ -26,23 +26,31 @@ export default function LoginPage() {
       alert("Please fill all fields");
       return;
     }
+
     try {
       const res = await axios.post(
         "http://localhost:5000/api/v1/auth/login",
         form
       );
+
       console.log(res.data);
       alert("Logged in Successfully!");
 
-      if (form.role === "admin") {
-        router.push("/dashboard");
-      } else if (form.role === "manager") {
-        router.push("/manager");
-      } else if (form.role === "sales") {
-        router.push("/Sale");
-      } else {
-        router.push("/");
-      }
+      // ✅ Save user info to localStorage so protected pages can check it
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          email: form.email,
+          role: form.role,
+          token: res.data.token, // if your backend returns a token
+        })
+      );
+
+      // Redirect based on role
+      if (form.role === "admin") router.push("/dashboard");
+      else if (form.role === "manager") router.push("/manager");
+      else if (form.role === "sales") router.push("/sales"); // must match SalesPage path
+      else router.push("/");
     } catch (error: any) {
       alert(error.response?.data?.msg || "Login failed");
       console.error(error);
@@ -52,7 +60,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-96 p-6 rounded-2xl bg-white border border-gray-300 shadow-lg">
-        <h2 className="text-2xl font-bold mb-5 text-gray-800 ">Login Here</h2>
+        <h2 className="text-2xl font-bold mb-5 text-gray-800">Login Here</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="block mb-1 font-semibold text-black">Email</label>
@@ -67,9 +75,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">
-              Password
-            </label>
+            <label className="block mb-1 font-semibold text-black">Password</label>
             <input
               name="password"
               type="password"
