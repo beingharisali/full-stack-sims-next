@@ -48,8 +48,8 @@ export async function updateSaler(
     const res=await http.put(`/${id}`,{name,orderitems,contactNumber, id, status,category})
 return res.data    
 }
-// export async function deleteSaler(id:string):Promise<{saler:Saler}> {
-//     const res= await http.delete(`/delete/${id}`)
-//     return res.data
+export async function deleteSaler(id:string):Promise<{saler:Saler}> {
+    const res= await http.delete(`/${id}`)
+    return res.data
     
-// }
+}
