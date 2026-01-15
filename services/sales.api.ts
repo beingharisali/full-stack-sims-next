@@ -20,10 +20,10 @@ export async function createSaler(
     const res =await http.post("/",{name,orderitems,contactNumber,status,category})
     return res.data;
 }
-// export async function getSaler():Promise<{saler:Saler[]}> {
-// const res =await http.get("/get");
-// return res.data    
-// }
+export async function getSaler():Promise<{saler:Saler[]}> {
+const res =await http.get("/get");
+return res.data    
+}
 // export async function getSingleSaler(id:string):Promise<{saler:Saler}>{
 //     const res =await http.get(`/get/${id}`);
 //     return res.data
