@@ -21,13 +21,13 @@ export async function createSaler(
     return res.data;
 }
 export async function getSaler():Promise<{saler:Saler[]}> {
-const res =await http.get("/get");
+const res =await http.get("/");
 return res.data    
 }
-// export async function getSingleSaler(id:string):Promise<{saler:Saler}>{
-//     const res =await http.get(`/get/${id}`);
-//     return res.data
-// }
+export async function getSingleSaler(id:string):Promise<{saler:Saler}>{
+    const res =await http.get(`/${id}`);
+    return res.data
+}
 // export async function updateSaler(
 //      name: string,
 //   contactNumber: string, 
