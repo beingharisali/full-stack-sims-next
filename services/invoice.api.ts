@@ -41,12 +41,12 @@ export async function getInvoices(): Promise<{ invoices: Invoice[] }> {
   return res.data;
 }
 
-// export async function getSingleInvoice(
-//   id: string
-// ): Promise<{ invoice: Invoice }> {
-//   const res = await http.get(`/${id}`);
-//   return res.data;
-// }
+export async function getSingleInvoice(
+  id: string
+): Promise<{ invoice: Invoice }> {
+  const res = await http.get(`/${id}`);
+  return res.data;
+}
 
 // export async function updateInvoice(
 //   id: string,
