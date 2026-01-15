@@ -84,9 +84,9 @@ export async function updateInvoice(
   return res.data;
 }
 
-// export async function deleteInvoice(
-//   id: string
-// ): Promise<{ invoice: Invoice }> {
-//   const res = await http.delete(`/${id}`);
-//   return res.data;
-// }
+export async function deleteInvoice(
+  id: string
+): Promise<{ invoice: Invoice }> {
+  const res = await http.delete(`/${id}`);
+  return res.data;
+}
