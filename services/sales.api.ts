@@ -28,28 +28,28 @@ export async function getSingleSaler(id:string):Promise<{saler:Saler}>{
     const res =await http.get(`/${id}`);
     return res.data
 }
-// export async function updateSaler(
-//      name: string,
-//   contactNumber: string, 
-//   category:
-//     |"mobile"
-//     |"laptop"
-//     | "headphones"
-//     | "tablet"
-//     | "televison"
-//     | "camera"
-//     | "smartwatch"
-//     | "accessories"
-//     | "home-appliances",
-//   status: string,
-//   orderitems: number,
-//   id:string,
-// ):Promise<{saler:Saler}> {
-//     const res=await http.put(`/update/${id}`,{name,orderitems,contactNumber, id, status,category})
-// return res.data    
-// }
-// export async function deleteSaler(id:string):Promise<{saler:Saler}> {
-//     const res= await http.delete(`/delete/${id}`)
-//     return res.data
+export async function updateSaler(
+     name: string,
+  contactNumber: string, 
+  category:
+    |"mobile"
+    |"laptop"
+    | "headphones"
+    | "tablet"
+    | "televison"
+    | "camera"
+    | "smartwatch"
+    | "accessories"
+    | "home-appliances",
+  status: string,
+  orderitems: number,
+  id:string,
+):Promise<{saler:Saler}> {
+    const res=await http.put(`/${id}`,{name,orderitems,contactNumber, id, status,category})
+return res.data    
+}
+export async function deleteSaler(id:string):Promise<{saler:Saler}> {
+    const res= await http.delete(`/${id}`)
+    return res.data
     
-// }
+}
