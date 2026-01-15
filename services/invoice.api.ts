@@ -36,10 +36,10 @@ export async function createInvoice(
   return res.data;
 }
 
-// export async function getInvoices(): Promise<{ invoices: Invoice[] }> {
-//   const res = await http.get("/");
-//   return res.data;
-// }
+export async function getInvoices(): Promise<{ invoices: Invoice[] }> {
+  const res = await http.get("/");
+  return res.data;
+}
 
 // export async function getSingleInvoice(
 //   id: string
