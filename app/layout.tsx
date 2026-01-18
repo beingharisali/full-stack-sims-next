@@ -3,7 +3,7 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { usePathname } from "next/navigation";
-import { AuthProvider } from "./context/authcontext";
+import { AuthProvider } from "../context/authprovider";
 
 interface RootLayoutProps {
   children: React.ReactNode;
