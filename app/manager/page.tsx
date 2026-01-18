@@ -1,6 +1,6 @@
 import React from 'react'
 
-function manger() {
+function manager() {
   return (
     <div>
       <h1>Welcome manger page</h1>
@@ -9,4 +9,4 @@ function manger() {
   )
 }
 
-export default manger
+export default manager;

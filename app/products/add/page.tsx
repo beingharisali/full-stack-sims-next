@@ -76,7 +76,7 @@ export default function AddProductPage() {
             type="submit"
             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
           >
-            Add Product
+            Add
           </button>
           <button
             type="button"
