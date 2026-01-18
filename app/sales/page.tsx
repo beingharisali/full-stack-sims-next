@@ -64,8 +64,7 @@ export default function SalesPage() {
 
   return (
     <div className="p-6">
-
-      {/* ===== Top Section (Summary + Add Sale Button) ===== */}
+      {/* Top Section */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
@@ -80,7 +79,6 @@ export default function SalesPage() {
           </div>
         </div>
 
-        {/* ✅ Add Sale Button */}
         <button
           onClick={() => router.push("/sales/add")}
           className="bg-teal-600 text-white px-5 py-2 rounded hover:bg-teal-700 h-fit"
@@ -89,7 +87,7 @@ export default function SalesPage() {
         </button>
       </div>
 
-      {/* ===== Sales Table ===== */}
+      {/* Sales Table */}
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <table className="min-w-full border-collapse">
           <thead className="bg-gray-100">
@@ -115,9 +113,7 @@ export default function SalesPage() {
             {sales.map((s, index) => (
               <tr
                 key={`${s.id}-${index}`}
-                className={`border-t ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                } hover:bg-blue-50 transition`}
+                className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition`}
               >
                 <td className="p-3">{s.id}</td>
                 <td className="p-3 font-medium">{s.product}</td>
@@ -150,7 +146,7 @@ export default function SalesPage() {
         </table>
       </div>
 
-      {/* ===== Edit Modal ===== */}
+      {/* Edit Modal */}
       {editing && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">

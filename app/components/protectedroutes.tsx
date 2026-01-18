@@ -4,13 +4,12 @@ import { useAuth } from "@/context/authprovider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function ProtectedRoute({
-  allowedRoles,
-  children,
-}: {
+interface ProtectedRouteProps {
   allowedRoles: string[];
   children: React.ReactNode;
-}) {
+}
+
+export default function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 

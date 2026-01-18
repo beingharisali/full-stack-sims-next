@@ -7,7 +7,11 @@ import Footer from "./components/Footer";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/context/authprovider";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
 
   // hide layout on login & signup pages

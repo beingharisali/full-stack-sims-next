@@ -2,6 +2,10 @@
 
 import ProtectedRoute from "@/app/components/protectedroutes";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return <ProtectedRoute allowedRoles={["admin"]}>{children}</ProtectedRoute>;
 }
