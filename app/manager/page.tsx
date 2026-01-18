@@ -4,7 +4,6 @@ function manger() {
   return (
     <div>
       <h1>Welcome manger page</h1>
-      <h1>Manger Page</h1>
     </div>
   )
 }
