@@ -25,6 +25,7 @@ export default function SalesPage() {
   const [quantity, setQuantity] = useState<number | "">("");
   const [total, setTotal] = useState<number | "">("");
 
+  // load sales
   useEffect(() => {
     const stored = localStorage.getItem("sales");
     const userSales: Sale[] = stored ? JSON.parse(stored) : [];
