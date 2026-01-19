@@ -1,6 +1,8 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import ProtectedRoute from "@/app/components/protectedroutes";
 
 type Sale = {
   id: number;
@@ -20,7 +22,6 @@ export default function SalesPage() {
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [editing, setEditing] = useState<Sale | null>(null);
-
   const [product, setProduct] = useState("");
   const [quantity, setQuantity] = useState<number | "">("");
   const [total, setTotal] = useState<number | "">("");
@@ -64,15 +65,15 @@ export default function SalesPage() {
   };
 
   return (
-    <div className="p-6">
-      {/* Header: Summary + Add Invoice */}
+    <ProtectedRoute allowedRoles={["admin", "sales"]}>
+      <div className="p-6">
+      {/* Top Section */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 shadow rounded">
             <h2 className="text-gray-500">Total Sales</h2>
             <p className="text-2xl font-bold">{sales.length}</p>
           </div>
-
           <div className="bg-white p-4 shadow rounded">
             <h2 className="text-gray-500">Total Revenue</h2>
             <p className="text-2xl font-bold">
@@ -81,16 +82,15 @@ export default function SalesPage() {
           </div>
         </div>
 
-        {/* 👉 Add Invoice Button (Right Corner) */}
         <button
-          onClick={() => router.push("/sales/invoice")}
+          onClick={() => router.push("/sales/add")}
           className="bg-teal-600 text-white px-5 py-2 rounded hover:bg-teal-700 h-fit"
         >
-           Add Invoice
+          Add Sale
         </button>
       </div>
 
-      {/* Table */}
+      {/* Sales Table */}
       <div className="bg-white shadow-md rounded-xl overflow-hidden">
         <table className="min-w-full border-collapse">
           <thead className="bg-gray-100">
@@ -112,14 +112,11 @@ export default function SalesPage() {
               </th>
             </tr>
           </thead>
-
           <tbody>
             {sales.map((s, index) => (
               <tr
                 key={`${s.id}-${index}`}
-                className={`border-t ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                } hover:bg-blue-50 transition`}
+                className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition`}
               >
                 <td className="p-3">{s.id}</td>
                 <td className="p-3 font-medium">{s.product}</td>
@@ -141,7 +138,6 @@ export default function SalesPage() {
                 </td>
               </tr>
             ))}
-
             {sales.length === 0 && (
               <tr>
                 <td colSpan={5} className="p-4 text-center text-gray-500">
@@ -160,20 +156,16 @@ export default function SalesPage() {
             <h2 className="text-xl font-semibold mb-4 border-b pb-2">
               Edit Sale
             </h2>
-
             <form onSubmit={handleUpdate} className="space-y-3">
               <input
                 type="text"
-                placeholder="Product Name"
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
                 className="border p-2 w-full rounded"
                 required
               />
-
               <input
                 type="number"
-                placeholder="Quantity"
                 value={quantity}
                 onChange={(e) =>
                   setQuantity(e.target.value === "" ? "" : Number(e.target.value))
@@ -181,10 +173,8 @@ export default function SalesPage() {
                 className="border p-2 w-full rounded"
                 required
               />
-
               <input
                 type="number"
-                placeholder="Total Amount"
                 value={total}
                 onChange={(e) =>
                   setTotal(e.target.value === "" ? "" : Number(e.target.value))
@@ -192,7 +182,6 @@ export default function SalesPage() {
                 className="border p-2 w-full rounded"
                 required
               />
-
               <div className="flex justify-end gap-2 pt-3">
                 <button
                   type="button"
@@ -209,6 +198,7 @@ export default function SalesPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
