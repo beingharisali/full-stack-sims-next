@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import ProtectedRoute from "@/app/components/protectedroutes";
 
 type Invoice = {
   id: number;
@@ -62,7 +63,8 @@ export default function InvoicePage() {
   };
 
   return (
-    <div className="p-6">
+    <ProtectedRoute allowedRoles={["admin", "sales"]}>
+      <div className="p-6">
       
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,6 +191,7 @@ export default function InvoicePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

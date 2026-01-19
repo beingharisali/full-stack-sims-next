@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import ProtectedRoute from "@/app/components/protectedroutes";
 
 type Product = {
   id: number;
@@ -73,7 +74,8 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-6">
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <div className="p-6">
      
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -211,6 +213,7 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

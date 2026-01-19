@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import ProtectedRoute from "@/app/components/protectedroutes";
 import {
   FaBox,
   FaWarehouse,
@@ -39,7 +41,8 @@ export default function Dashboard() {
   ];
 
   return (
-    <div>
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <div>
       <h1 className="text-center text-3xl font-bold p-4 m-3">
         Dashborad
       </h1>
@@ -67,6 +70,7 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
