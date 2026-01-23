@@ -1,27 +1,38 @@
 "use client";
 
-import { useAuth } from "../../context/authprovider";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 interface ProtectedRouteProps {
-  allowedRoles: string[];
-  children: React.ReactNode;
+	children: React.ReactNode;
+	allowedRoles?: string[];
 }
 
-export default function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAuth();
-  const router = useRouter();
+export default function ProtectedRoute({
+	children,
+	allowedRoles,
+}: ProtectedRouteProps) {
+	const { user, isAuthenticated, isLoading } = useAuth();
+	const router = useRouter();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-    } else if (user && !allowedRoles.includes(user.role)) {
-      router.push("/unauthorized");
-    }
-  }, [isAuthenticated, user, router, allowedRoles]);
+	useEffect(() => {
+		if (!isLoading) {
+			if (!isAuthenticated) {
+				router.push("/");
+			} else if (allowedRoles && !allowedRoles.includes(user?.role || "")) {
+				router.push("/unauthorized");
+			}
+		}
+	}, [isAuthenticated, isLoading, user, allowedRoles, router]);
 
-  if (!isAuthenticated || !user) return null;
+	if (isLoading) {
+		return <div>Loading...</div>;
+	}
 
-  return <>{children}</>;
+	const hasAccess =
+		isAuthenticated &&
+		(!allowedRoles || allowedRoles.includes(user?.role || ""));
+
+	return hasAccess ? <>{children}</> : null;
 }
