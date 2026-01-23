@@ -7,5 +7,9 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  return <ProtectedRoute allowedRoles={["admin", "saler"]}>{children}</ProtectedRoute>;
+  return (
+    <ProtectedRoute allowedRoles={["admin", "manager"]}>
+      {children}
+    </ProtectedRoute>
+  );
 }
