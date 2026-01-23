@@ -36,8 +36,15 @@ export default function LoginPage() {
 
 		setIsLoading(true);
 		try {
-			await login(form.email, form.password);
-			router.push("/dashboard");
+			const user = await login(form.email, form.password);
+			localStorage.setItem("role", user.role);
+			if (user?.role === "manager") {
+				router.push("/manager");
+			} else if (user?.role === "admin") {
+				router.push("/dashboard");
+			} else {
+				router.push("/Sale");
+			}
 		} catch (error: any) {
 			setError(
 				error?.response?.data?.message || "Login failed. Please try again.",

@@ -44,14 +44,21 @@ export default function Page() {
 
 		setIsLoading(true);
 		try {
-			await register(
+			const user = await register(
 				form.firstName,
 				form.lastName,
 				form.email,
 				form.password,
 				form.role,
 			);
-			router.push("/dashboard");
+			localStorage.setItem("role", user.role);
+			if (user.role === "manager") {
+				router.push("/manager");
+			} else if (user.role === "admin") {
+				router.push("/dashboard");
+			} else {
+				router.push("/Sale");
+			}
 		} catch (error: any) {
 			setError(
 				error?.response?.data?.message ||

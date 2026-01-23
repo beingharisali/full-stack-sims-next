@@ -43,7 +43,7 @@ export default function Dashboard() {
 	return (
 		<ProtectedRoute allowedRoles={["admin"]}>
 			<div>
-				<h1 className="text-center text-3xl font-bold p-4 m-3">Dashborad</h1>
+				<h1 className="text-center text-3xl font-bold p-4 m-3">Dashboard</h1>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 					{stats.map((item, index) => (

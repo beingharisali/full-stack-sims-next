@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 						const res = await http.get("/auth/profile");
 						setUser(res.data.user);
 					} catch (error) {
-						localStorage.removeItem("token");
+						localStorage.clear();
 					}
 				}
 			}
