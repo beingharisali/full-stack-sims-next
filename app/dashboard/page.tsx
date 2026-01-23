@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import ProtectedRoute from "@/app/components/protectedroutes";
 import {
   FaBox,
   FaWarehouse,
@@ -39,34 +41,34 @@ export default function Dashboard() {
   ];
 
   return (
-    <div>
-      <h1 className="text-center text-3xl font-bold p-4 m-3">
-        Welcome back!
-      </h1>
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <div>
+        <h1 className="text-center text-3xl font-bold p-4 m-3">Dashborad</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {stats.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 flex items-center justify-between group"
-          >
-            <div>
-              <h2 className="text-gray-500 text-base font-medium">
-                {item.title}
-              </h2>
-              <p className="text-3xl font-bold mt-3 text-gray-800">
-                {item.value}
-              </p>
-            </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {stats.map((item, index) => (
             <div
-              className={`p-5 rounded-full ${item.bg} ${item.hover} transition`}
+              key={index}
+              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 flex items-center justify-between group"
             >
-              {item.icon}
+              <div>
+                <h2 className="text-gray-500 text-base font-medium">
+                  {item.title}
+                </h2>
+                <p className="text-3xl font-bold mt-3 text-gray-800">
+                  {item.value}
+                </p>
+              </div>
+
+              <div
+                className={`p-5 rounded-full ${item.bg} ${item.hover} transition`}
+              >
+                {item.icon}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

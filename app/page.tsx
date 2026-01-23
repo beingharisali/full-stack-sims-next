@@ -14,7 +14,7 @@ export default function LoginPage() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -30,26 +30,24 @@ export default function LoginPage() {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/v1/auth/login",
-        form
+        form,
       );
 
       console.log(res.data);
       alert("Logged in Successfully!");
 
-      // ✅ Save user info to localStorage so protected pages can check it
       localStorage.setItem(
         "user",
         JSON.stringify({
           email: form.email,
           role: form.role,
-          token: res.data.token, // if your backend returns a token
-        })
+          token: res.data.token,
+        }),
       );
 
-      // Redirect based on role
       if (form.role === "admin") router.push("/dashboard");
       else if (form.role === "manager") router.push("/manager");
-      else if (form.role === "sales") router.push("/sales"); // must match SalesPage path
+      else if (form.role === "saler") router.push("/saler");
       else router.push("/");
     } catch (error: any) {
       alert(error.response?.data?.msg || "Login failed");
@@ -75,7 +73,9 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">Password</label>
+            <label className="block mb-1 font-semibold text-black">
+              Password
+            </label>
             <input
               name="password"
               type="password"
@@ -97,7 +97,7 @@ export default function LoginPage() {
               <option value="">Select Role</option>
               <option value="manager">Manager</option>
               <option value="admin">Admin</option>
-              <option value="sales">Saler</option>
+              <option value="saler">Saler</option>
             </select>
           </div>
 

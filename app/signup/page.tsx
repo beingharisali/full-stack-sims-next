@@ -15,7 +15,7 @@ export default function Page() {
   });
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -30,8 +30,9 @@ export default function Page() {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/v1/auth/register",
-        form
+        form,
       );
+      localStorage.setItem("user", JSON.stringify(res.data.user));
       console.log(res.data);
       alert("User registered successfully!");
 
@@ -39,8 +40,8 @@ export default function Page() {
         router.push("/dashboard");
       } else if (form.role === "manager") {
         router.push("/manager");
-      } else if (form.role === "sales") {
-        router.push("/Sale");
+      } else if (form.role === "saler") {
+        router.push("/saler");
       } else {
         router.push("/");
       }
@@ -55,7 +56,9 @@ export default function Page() {
         <h2 className="text-2xl font-bold mb-5 text-gray-800">Sign Up Here</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">First Name</label>
+            <label className="block mb-1 font-semibold text-black">
+              First Name
+            </label>
             <input
               name="firstName"
               type="text"
@@ -67,7 +70,9 @@ export default function Page() {
           </div>
 
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">Last Name</label>
+            <label className="block mb-1 font-semibold text-black">
+              Last Name
+            </label>
             <input
               name="lastName"
               type="text"
@@ -91,7 +96,9 @@ export default function Page() {
           </div>
 
           <div className="mb-3">
-            <label className="block mb-1 font-semibold text-black">Password</label>
+            <label className="block mb-1 font-semibold text-black">
+              Password
+            </label>
             <input
               name="password"
               type="password"
@@ -113,7 +120,7 @@ export default function Page() {
               <option value="">Select Role</option>
               <option value="manager">Manager</option>
               <option value="admin">Admin</option>
-              <option value="sales">Saler</option>
+              <option value="saler">Saler</option>
             </select>
           </div>
 

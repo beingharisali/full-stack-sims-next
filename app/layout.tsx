@@ -1,9 +1,10 @@
+"use client";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { usePathname } from "next/navigation";
-import { AuthProvider } from "./context/authcontext";
+import { AuthProvider } from "../context/authcontext";
 
 export default function RootLayout({
   children,
