@@ -4,8 +4,12 @@ import { useState, ChangeEvent } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { useRedirectIfAuth } from "@/hooks/useRedirectIfAuth";
 
 export default function Page() {
+  useRedirectIfAuth();
+  const { register } = useAuth();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -13,6 +17,8 @@ export default function Page() {
     password: "",
     role: "",
   });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -88,7 +94,7 @@ export default function Page() {
             <input
               name="email"
               type="email"
-              placeholder="abc@gmail.com"
+              placeholder="Email"
               value={form.email}
               onChange={handleChange}
               className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -126,9 +132,10 @@ export default function Page() {
 
           <button
             type="submit"
-            className="flex mx-auto text-center text-white bg-blue-500 border-0 py-2 px-10 focus:outline-none hover:bg-blue-900 rounded-lg text-lg transition duration-200 disabled:opacity-50"
+            disabled={isLoading}
+            className="flex mx-auto text-center text-white bg-blue-500 border-0 py-2 px-10 focus:outline-none hover:bg-blue-900 disabled:bg-gray-400 rounded-lg text-lg transition duration-200"
           >
-            Register
+            {isLoading ? "Registering..." : "Register"}
           </button>
         </form>
 

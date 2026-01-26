@@ -4,7 +4,7 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { usePathname } from "next/navigation";
-import { AuthProvider } from "../context/authcontext";
+import { AuthProvider } from "../context/AuthContext";
 
 export default function RootLayout({
   children,
@@ -12,7 +12,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
   const hideLayout = pathname === "/" || pathname === "/signup";
 
   return (
@@ -20,12 +19,10 @@ export default function RootLayout({
       <body className="bg-gray-100 min-h-screen flex flex-col">
         <AuthProvider>
           {!hideLayout && <Navbar />}
-
           <div className="flex flex-1">
             {!hideLayout && <Sidebar />}
             <main className="flex-1 p-6">{children}</main>
           </div>
-
           {!hideLayout && <Footer />}
         </AuthProvider>
       </body>

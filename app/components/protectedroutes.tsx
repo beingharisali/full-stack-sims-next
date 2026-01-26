@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface ProtectedRouteProps {
@@ -13,15 +13,30 @@ export default function ProtectedRoute({
   allowedRoles,
 }: ProtectedRouteProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const role = user.role;
+    const storedUser = localStorage.getItem("user");
 
-    if (!role || !allowedRoles.includes(role)) {
-      router.push("/");
+    if (!storedUser) {
+      router.replace("/");
+      return;
     }
+
+    const user = JSON.parse(storedUser);
+
+    if (!allowedRoles.includes(user.role)) {
+      router.replace("/");
+      return;
+    }
+
+    setAuthorized(true);
+    setLoading(false);
   }, [allowedRoles, router]);
+
+  if (loading) return null;
+  if (!authorized) return null;
 
   return <>{children}</>;
 }
