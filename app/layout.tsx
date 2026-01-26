@@ -7,12 +7,11 @@ import Footer from "./components/Footer";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { Toaster } from "react-hot-toast";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { AuthProvider } from "../context/AuthContext";
 
 function Layout({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
-
   const hideLayout = pathname === "/" || pathname === "/signup";
 
   // Show layout if user exists or not on login/signup
@@ -36,7 +35,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="bg-gray-100 min-h-screen flex flex-col">
         <AuthProvider>
-          <Layout>{children}</Layout>
+          {!hideLayout && <Navbar />}
+          <div className="flex flex-1">
+            {!hideLayout && <Sidebar />}
+            <main className="flex-1 p-6">{children}</main>
+          </div>
+          {!hideLayout && <Footer />}
         </AuthProvider>
       </body>
     </html>

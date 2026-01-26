@@ -2,24 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const router = useRouter();
-  const { logout, user, isLoading } = useAuth(); // add isLoading
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    setRole(user.role || null);
+  }, []);
 
   const handleLogout = () => {
     logout();
     router.push("/");
   };
-
-  // Show nothing while auth state is loading
-  if (isLoading) return null;
-
-  // Show nothing if user is not logged in
-  if (!user) return null;
-
-  const role = user.role;
 
   const pageAccess: Record<string, string[]> = {
     products: ["admin", "manager"],
@@ -35,6 +32,8 @@ export default function Navbar() {
     { name: "Invoice", href: "/invoice", key: "invoice" },
   ];
 
+  if (!role) return null; // prevents hydration error
+
   return (
     <nav className="bg-gray-800 text-white px-6 py-4 flex items-center">
       <div className="font-bold text-xl w-1/4">
@@ -44,7 +43,7 @@ export default function Navbar() {
       <div className="flex justify-center gap-8 w-2/4">
         {links.map(
           (link) =>
-            pageAccess[link.key]?.includes(role) && (
+            pageAccess[link.name.toLowerCase()]?.includes(role) && (
               <Link
                 key={link.name}
                 href={link.href}

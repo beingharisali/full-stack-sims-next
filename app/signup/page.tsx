@@ -6,13 +6,10 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useRedirectIfAuth } from "@/hooks/useRedirectIfAuth";
-import { toast } from "react-hot-toast"; // ✅ import toast
 
-export default function SignUpPage() {
+export default function Page() {
   useRedirectIfAuth();
   const { register } = useAuth();
-  const router = useRouter();
-
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -117,6 +114,7 @@ export default function SignUpPage() {
             <input
               name="email"
               type="email"
+              placeholder="Email"
               value={form.email}
               placeholder="Email"
               onChange={handleChange}
