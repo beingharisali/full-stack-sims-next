@@ -14,7 +14,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    logout();
     router.push("/");
   };
 
@@ -26,10 +26,10 @@ export default function Navbar() {
   };
 
   const links = [
-    { name: "Products", href: "/products" },
-    { name: "Inventory", href: "/inventory" },
-    { name: "Sales", href: "/sales" },
-    { name: "Invoice", href: "/invoice" },
+    { name: "Products", href: "/products", key: "products" },
+    { name: "Inventory", href: "/inventory", key: "inventory" },
+    { name: "Sales", href: "/sales", key: "sales" },
+    { name: "Invoice", href: "/invoice", key: "invoice" },
   ];
 
   if (!role) return null; // prevents hydration error
@@ -55,7 +55,14 @@ export default function Navbar() {
         )}
       </div>
 
-      <div className="flex justify-end w-1/4">
+      <div className="flex justify-end gap-4 w-1/4 items-center">
+        <div className="text-sm text-right">
+          <p className="text-gray-300">
+            {user.firstName} {user.lastName}
+          </p>
+          <p className="text-yellow-400 text-xs capitalize">{user.role}</p>
+        </div>
+
         <button
           onClick={handleLogout}
           className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-medium"
