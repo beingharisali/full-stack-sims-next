@@ -6,7 +6,7 @@ import ProtectedRoute from "../../components/protectedroutes";
 export default function AddInventoryPage() {
   const router = useRouter();
   const [product, setProduct] = useState("");
-  const [quantity, setQuantity] = useState<number | "">(""); // empty string
+  const [quantity, setQuantity] = useState<number | "">("");
   const [location, setLocation] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
