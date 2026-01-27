@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import ProtectedRoute from "@/app/components/ProtectedRoutes";
+import ProtectedRoute from "../../components/protectedroutes";
 
 export default function AddSalePage() {
 	const router = useRouter();
