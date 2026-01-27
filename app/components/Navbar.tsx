@@ -1,17 +1,26 @@
 "use client";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setRole(user.role);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
     router.push("/");
   };
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const role = user.role;
   const pageAccess: Record<string, string[]> = {
     products: ["admin", "manager"],
     inventory: ["admin", "manager"],
@@ -33,16 +42,18 @@ export default function Navbar() {
       </div>
 
       <div className="flex justify-center gap-8 w-2/4">
-        {links.map((link) =>
-          pageAccess[link.name.toLowerCase()]?.includes(role) ? (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="relative after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-yellow-400 after:transition-all after:duration-300 hover:after:w-full"
-            >
-              {link.name}
-            </Link>
-          ) : null,
+        {links.map(
+          (link) =>
+            role &&
+            pageAccess[link.name.toLowerCase()]?.includes(role) && (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="relative after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-yellow-400 after:transition-all after:duration-300 hover:after:w-full"
+              >
+                {link.name}
+              </Link>
+            ),
         )}
       </div>
 
