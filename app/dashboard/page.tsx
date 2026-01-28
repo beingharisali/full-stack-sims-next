@@ -1,6 +1,6 @@
 "use client";
 
-import ProtectedRoute from "@/app/components/protectedroutes";
+import ProtectedRoute from "../../app/components/protectedroutes";
 import {
   FaBox,
   FaWarehouse,
