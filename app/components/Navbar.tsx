@@ -29,7 +29,7 @@ export default function Navbar() {
           <Link
             key={link.name}
             href={link.href}
-            className="relative after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-yellow-400 after:transition-all after:duration-300 hover:after:w-full"
+            className="relative after:absolute after:left-0 after:-bottom-1 after:h-[0.5] after:w-0 after:bg-yellow-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             {link.name}
           </Link>
