@@ -69,6 +69,16 @@ export default function Dashboard() {
 
   if (loading) return <p className="text-center mt-10 text-gray-500">Loading...</p>;
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const res = await fetch("http://localhost:5000/api/v1/dashboard");
+      const data = await res.json();
+      setDashboardData(data);
+    };
+
+    fetchDashboardData();
+  }, []);
+
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
       <div className="p-6">
