@@ -7,38 +7,87 @@ import {
   FaShoppingCart,
   FaFileInvoice,
 } from "react-icons/fa";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
+  const [dashboardData, setDashboardData] = useState({
+    totalProducts: 0,
+    totalStock: 0,
+    totalSales: 0,
+    invoices: 0,
+  });
+
+  // const stats = [
+  //   {
+  //     title: "Total Products",
+  //     value: 24,
+  //     icon: <FaBox className="text-3xl text-blue-600" />,
+  //     bg: "bg-blue-100",
+  //     hover: "group-hover:bg-blue-200",
+  //   },
+  //   {
+  //     title: "Total Stock",
+  //     value: 320,
+  //     icon: <FaWarehouse className="text-3xl text-green-600" />,
+  //     bg: "bg-green-100",
+  //     hover: "group-hover:bg-green-200",
+  //   },
+  //   {
+  //     title: "Total Sales",
+  //     value: "Rs. 85,000",
+  //     icon: <FaShoppingCart className="text-3xl text-purple-600" />,
+  //     bg: "bg-purple-100",
+  //     hover: "group-hover:bg-purple-200",
+  //   },
+  //   {
+  //     title: "Invoices",
+  //     value: 12,
+  //     icon: <FaFileInvoice className="text-3xl text-red-600" />,
+  //     bg: "bg-red-100",
+  //     hover: "group-hover:bg-red-200",
+  //   },
+  // ];
+
   const stats = [
     {
       title: "Total Products",
-      value: 24,
+      value: dashboardData.totalProducts,
       icon: <FaBox className="text-3xl text-blue-600" />,
       bg: "bg-blue-100",
       hover: "group-hover:bg-blue-200",
     },
     {
       title: "Total Stock",
-      value: 320,
+      value: dashboardData.totalStock,
       icon: <FaWarehouse className="text-3xl text-green-600" />,
       bg: "bg-green-100",
       hover: "group-hover:bg-green-200",
     },
     {
       title: "Total Sales",
-      value: "Rs. 85,000",
+      value: `Rs. ${dashboardData.totalSales}`,
       icon: <FaShoppingCart className="text-3xl text-purple-600" />,
       bg: "bg-purple-100",
       hover: "group-hover:bg-purple-200",
     },
     {
       title: "Invoices",
-      value: 12,
+      value: dashboardData.invoices,
       icon: <FaFileInvoice className="text-3xl text-red-600" />,
       bg: "bg-red-100",
       hover: "group-hover:bg-red-200",
     },
   ];
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const res = await fetch("http://localhost:5000/api/v1/dashboard");
+      const data = await res.json();
+      setDashboardData(data);
+    };
+
+    fetchDashboardData();
+  }, []);
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
