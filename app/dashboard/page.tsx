@@ -49,7 +49,12 @@ export default function Dashboard() {
           {stats.map((item, index) => (
             <div
               key={index}
-              className={`bg-white rounded-2xl p-6 sm:p-8 shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 flex items-center justify-between group transform hover:-translate-y-1`}
+              className={`
+                bg-white rounded-2xl p-6 sm:p-8 shadow-md 
+                hover:shadow-2xl transform hover:-translate-y-2 
+                transition-all duration-500 ease-in-out
+                border border-gray-100 flex items-center justify-between group
+              `}
             >
               <div>
                 <h2 className="text-gray-500 text-base font-medium">{item.title}</h2>
@@ -57,7 +62,7 @@ export default function Dashboard() {
               </div>
 
               <div
-                className={`p-5 rounded-full ${item.bg} ${item.hover} transition flex items-center justify-center`}
+                className={`p-5 rounded-full ${item.bg} ${item.hover} transition-colors duration-500 flex items-center justify-center`}
               >
                 {item.icon}
               </div>
