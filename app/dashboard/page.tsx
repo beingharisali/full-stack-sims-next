@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/app/components/protectedroutes";
-import { FaBox, FaWarehouse, FaShoppingCart, FaFileInvoice } from "react-icons/fa";
+import {
+  FaBox,
+  FaWarehouse,
+  FaShoppingCart,
+  FaFileInvoice,
+} from "react-icons/fa";
 import api from "@/app/utils/api";
 import axios from "axios";
 
@@ -28,11 +33,11 @@ export default function Dashboard() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true); // ✅ NEW
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [ageSeconds, setAgeSeconds] = useState<number>(0);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [ageSeconds, setAgeSeconds] = useState(0);
 
-  // Fetch user and stats
   const fetchData = async () => {
     try {
       setErrorMsg(null);
@@ -44,40 +49,37 @@ export default function Dashboard() {
       }
 
       const statsRes = await api.get("/stats");
-      const newStats = statsRes.data;
+      setStats(statsRes.data);
 
-      // Update only if stats changed
-      if (
-        newStats.totalProducts !== stats.totalProducts ||
-        newStats.totalStock !== stats.totalStock ||
-        newStats.totalSales !== stats.totalSales ||
-        newStats.invoices !== stats.invoices
-      ) {
-        setStats(newStats);
-      }
-
-      // Update last updated timestamp
       setLastUpdated(new Date());
-      setAgeSeconds(0); // reset age counter
+      setAgeSeconds(0);
     } catch (err: unknown) {
       let message = "Something went wrong!";
       if (axios.isAxiosError(err)) {
-        message = err.response?.data?.message || err.response?.data || err.message;
+        message =
+          err.response?.data?.message ||
+          err.response?.data ||
+          err.message;
       } else if (err instanceof Error) {
         message = err.message;
       }
-      console.error("Fetch error:", message);
       setErrorMsg(message);
     } finally {
-      setLoading(false);
+      if (initialLoad) {
+        setLoading(false);
+        setInitialLoad(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchData();
 
-    const fetchInterval = setInterval(fetchData, 3000); // metrics polling
-    const ageInterval = setInterval(() => setAgeSeconds((prev) => prev + 1), 1000); // age timer
+    const fetchInterval = setInterval(fetchData, 3000);
+    const ageInterval = setInterval(
+      () => setAgeSeconds((prev) => prev + 1),
+      1000
+    );
 
     return () => {
       clearInterval(fetchInterval);
@@ -85,42 +87,45 @@ export default function Dashboard() {
     };
   }, []);
 
-  if (loading)
-    return <p className="text-center mt-10 text-gray-500">Loading...</p>;
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      const res = await fetch("http://localhost:5000/api/v1/dashboard");
-      const data = await res.json();
-      setDashboardData(data);
-    };
-
-    fetchDashboardData();
-  }, []);
+  if (loading) {
+    return (
+      <p className="text-center mt-10 text-gray-500">
+        Loading...
+      </p>
+    );
+  }
 
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
       <div className="p-6">
-        <h1 className="text-center text-3xl font-bold mb-2">Dashboard</h1>
-
-        {errorMsg && (
-          <p className="text-center text-red-500 mb-4">
-            Error fetching data: {errorMsg}
-          </p>
-        )}
+        <h1 className="text-center text-3xl font-bold mb-2">
+          Dashboard
+        </h1>
 
         {user && (
           <p className="text-center text-gray-500 mb-2">
-            Role: <span className="font-semibold">{user.role}</span>
+            Role:{" "}
+            <span className="font-semibold">
+              {user.role}
+            </span>
           </p>
         )}
 
         {lastUpdated && (
           <p className="text-center text-gray-400 mb-6 text-sm">
-            Last updated: {lastUpdated.toLocaleTimeString()} ({ageSeconds} seconds ago)
+            Last updated:{" "}
+            {lastUpdated.toLocaleTimeString()} (
+            {ageSeconds} seconds ago)
           </p>
         )}
 
+        {errorMsg && (
+          <p className="text-center text-red-500 mb-4">
+            {errorMsg}
+          </p>
+        )}
+
+        {/* 🔥 SAME UI AS BEFORE */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
@@ -154,16 +159,26 @@ export default function Dashboard() {
           ].map((item, index) => (
             <div
               key={index}
-              className={`bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100 flex items-center justify-between group
-                         transform transition-all duration-500 ease-in-out hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-blue-200/30`}
+              className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100
+                         flex items-center justify-between group
+                         transform transition-all duration-500 ease-in-out
+                         hover:-translate-y-2 hover:scale-105
+                         hover:shadow-2xl hover:shadow-blue-200/30"
             >
               <div>
-                <h2 className="text-gray-500 text-base font-medium">{item.title}</h2>
-                <p className="text-3xl font-bold mt-2 sm:mt-3 text-gray-800">{item.value}</p>
+                <h2 className="text-gray-500 text-base font-medium">
+                  {item.title}
+                </h2>
+                <p className="text-3xl font-bold mt-2 sm:mt-3 text-gray-800">
+                  {item.value}
+                </p>
               </div>
 
               <div
-                className={`p-5 rounded-full ${item.bg} ${item.hover} flex items-center justify-center transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110`}
+                className={`p-5 rounded-full ${item.bg} ${item.hover}
+                            flex items-center justify-center
+                            transition-transform duration-500
+                            group-hover:rotate-12 group-hover:scale-110`}
               >
                 {item.icon}
               </div>
