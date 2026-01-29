@@ -29,30 +29,43 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [ageSeconds, setAgeSeconds] = useState<number>(0);
 
   // Fetch user and stats
   const fetchData = async () => {
     try {
-      setErrorMsg(null); // reset error
+      setErrorMsg(null);
 
-      // Fetch user
-      const userRes = await api.get("/user");
-      setUser(userRes.data);
-      localStorage.setItem("user", JSON.stringify(userRes.data));
+      if (!user) {
+        const userRes = await api.get("/user");
+        setUser(userRes.data);
+        localStorage.setItem("user", JSON.stringify(userRes.data));
+      }
 
-      // Fetch stats
       const statsRes = await api.get("/stats");
-      setStats(statsRes.data);
+      const newStats = statsRes.data;
+
+      // Update only if stats changed
+      if (
+        newStats.totalProducts !== stats.totalProducts ||
+        newStats.totalStock !== stats.totalStock ||
+        newStats.totalSales !== stats.totalSales ||
+        newStats.invoices !== stats.invoices
+      ) {
+        setStats(newStats);
+      }
+
+      // Update last updated timestamp
+      setLastUpdated(new Date());
+      setAgeSeconds(0); // reset age counter
     } catch (err: unknown) {
       let message = "Something went wrong!";
-      
       if (axios.isAxiosError(err)) {
-        // Axios error
         message = err.response?.data?.message || err.response?.data || err.message;
       } else if (err instanceof Error) {
         message = err.message;
       }
-
       console.error("Fetch error:", message);
       setErrorMsg(message);
     } finally {
@@ -60,14 +73,20 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch initially + polling every 10s
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+
+    const fetchInterval = setInterval(fetchData, 3000); // metrics polling
+    const ageInterval = setInterval(() => setAgeSeconds((prev) => prev + 1), 1000); // age timer
+
+    return () => {
+      clearInterval(fetchInterval);
+      clearInterval(ageInterval);
+    };
   }, []);
 
-  if (loading) return <p className="text-center mt-10 text-gray-500">Loading...</p>;
+  if (loading)
+    return <p className="text-center mt-10 text-gray-500">Loading...</p>;
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -91,8 +110,14 @@ export default function Dashboard() {
         )}
 
         {user && (
-          <p className="text-center text-gray-500 mb-6">
+          <p className="text-center text-gray-500 mb-2">
             Role: <span className="font-semibold">{user.role}</span>
+          </p>
+        )}
+
+        {lastUpdated && (
+          <p className="text-center text-gray-400 mb-6 text-sm">
+            Last updated: {lastUpdated.toLocaleTimeString()} ({ageSeconds} seconds ago)
           </p>
         )}
 
