@@ -1,61 +1,109 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../../components/protectedroutes";
+import axios from "axios";
 
 export default function AddProductPage() {
   const router = useRouter();
 
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [price, setPrice] = useState<number | "">("");
+  const [supplier, setSupplier] = useState("");
   const [stock, setStock] = useState<number | "">("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const getNextId = (): number => {
-    const defaultProducts = [
-      { id: 1, name: "Laptop" },
-      { id: 2, name: "Mouse" },
-      { id: 3, name: "Keyboard" },
-    ];
-
-    const stored = localStorage.getItem("products");
-    const userProducts = stored ? JSON.parse(stored) : [];
-
-    const allProducts = [...defaultProducts, ...userProducts];
-    return allProducts.length
-      ? Math.max(...allProducts.map((p: any) => p.id)) + 1
-      : 1;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const stored = localStorage.getItem("products");
-    const products = stored ? JSON.parse(stored) : [];
+    // Basic validation
+    if (Number(price) < 0) {
+      setErrorMsg("Price cannot be negative");
+      return;
+    }
+    if (Number(stock) < 0) {
+      setErrorMsg("Stock cannot be negative");
+      return;
+    }
 
-    const newProduct = {
-      id: getNextId(),
-      name,
-      price: Number(price),
-      stock: Number(stock),
-    };
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/products/create",
+        {
+          name,
+          description,
+          category,
+          price: Number(price),
+          supplier,
+          stock: Number(stock),
+        },
+      );
 
-    products.push(newProduct);
-    localStorage.setItem("products", JSON.stringify(products));
-
-    router.push("/products");
+      if (res.data.success) {
+        router.push("/products");
+      } else {
+        setErrorMsg(res.data.message || "Unable to create product");
+      }
+    } catch (error: any) {
+      setErrorMsg(
+        error.response?.data?.message || error.message || "Server error",
+      );
+    }
   };
 
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
       <div className="max-w-md mx-auto mt-10 bg-white p-6 shadow rounded">
         <h2 className="text-2xl font-bold mb-4">Add Product</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+
+        {errorMsg && (
+          <p className="text-red-500 mb-3 font-medium">{errorMsg}</p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
             placeholder="Product Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="border p-2 rounded w-full"
+            className="border p-2 w-full rounded"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="border p-2 w-full rounded"
+            required
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border p-2 w-full rounded"
+            required
+          >
+            <option value="">Select Category</option>
+            <option value="mobile">Mobile</option>
+            <option value="laptop">Laptop</option>
+            <option value="headphones">Headphones</option>
+            <option value="tablet">Tablet</option>
+            <option value="televison">Television</option>
+            <option value="camera">Camera</option>
+            <option value="smartwatch">Smartwatch</option>
+            <option value="accessories">Accessories</option>
+            <option value="home-appliances">Home Appliances</option>
+          </select>
+
+          <input
+            type="text"
+            placeholder="Supplier Name"
+            value={supplier}
+            onChange={(e) => setSupplier(e.target.value)}
+            className="border p-2 w-full rounded"
             required
           />
           <input
@@ -65,7 +113,7 @@ export default function AddProductPage() {
             onChange={(e) =>
               setPrice(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="border p-2 rounded w-full"
+            className="border p-2 w-full rounded"
             required
           />
           <input
@@ -75,22 +123,20 @@ export default function AddProductPage() {
             onChange={(e) =>
               setStock(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="border p-2 rounded w-full"
+            className="border p-2 w-full rounded"
             required
           />
-          <div className="flex space-x-2">
-            <button
-              type="submit"
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-            >
-              Add Product
-            </button>
+
+          <div className="flex justify-end gap-2 pt-3">
             <button
               type="button"
               onClick={() => router.push("/products")}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-600"
             >
               Cancel
+            </button>
+            <button className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700">
+              Add Product
             </button>
           </div>
         </form>

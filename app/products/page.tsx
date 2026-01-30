@@ -1,48 +1,54 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
+import axios from "axios";
 
 type Product = {
-  id: number;
+  _id: string;
   name: string;
   price: number;
   stock: number;
+  supplier: string;
+  category: string;
+  description: string;
 };
 
 export default function ProductsPage() {
   const router = useRouter();
-
-  const defaultProducts: Product[] = [
-    { id: 1, name: "Laptop", price: 1200, stock: 10 },
-    { id: 2, name: "Mouse", price: 20, stock: 50 },
-    { id: 3, name: "Keyboard", price: 35, stock: 30 },
-  ];
-
   const [products, setProducts] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number | "">("");
   const [stock, setStock] = useState<number | "">("");
+  const [supplier, setSupplier] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
 
-  const getNextId = (products: Product[]) =>
-    products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1;
-
-  useEffect(() => {
-    const stored = localStorage.getItem("products");
-    const userProducts: Product[] = stored ? JSON.parse(stored) : [];
-    setProducts([...defaultProducts, ...userProducts]);
-  }, []);
-
-  const save = (data: Product[]) => {
-    setProducts(data);
-    const userProducts = data.filter((p) => p.id > 3);
-    localStorage.setItem("products", JSON.stringify(userProducts));
+  // Fetch products from backend
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/v1/products/get");
+      console.log(res.data);
+      setProducts(res.data.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    save(products.filter((p) => p.id !== id));
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleDelete = async (_id: string) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/v1/products/delete/${_id}`);
+      setProducts(products.filter((p) => p._id !== _id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleEdit = (product: Product) => {
@@ -50,24 +56,39 @@ export default function ProductsPage() {
     setName(product.name);
     setPrice(product.price);
     setStock(product.stock);
+    setSupplier(product.supplier);
+    setCategory(product.category);
+    setDescription(product.description);
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
 
-    const updated = products.map((p) =>
-      p.id === editing.id
-        ? {
-            ...p,
-            name,
-            price: Number(price),
-            stock: Number(stock),
-          }
-        : p,
-    );
-    save(updated);
-    setEditing(null);
+    try {
+      const updatedProduct = {
+        name,
+        price: Number(price),
+        stock: Number(stock),
+        supplier,
+        category,
+        description,
+      };
+
+      await axios.put(
+        `http://localhost:5000/api/v1/products/update/${editing._id}`,
+        updatedProduct,
+      );
+
+      setProducts(
+        products.map((p) =>
+          p._id === editing._id ? { ...p, ...updatedProduct } : p,
+        ),
+      );
+      setEditing(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -100,9 +121,6 @@ export default function ProductsPage() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-                  ID
-                </th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">
                   Name
                 </th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
@@ -111,23 +129,32 @@ export default function ProductsPage() {
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
                   Stock
                 </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-600">
+                  Supplier
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-600">
+                  Category
+                </th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-600">
+                  Description
+                </th>
                 <th className="p-3 text-center text-sm font-semibold text-gray-600">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {products.map((p, index) => (
+              {products.map((p) => (
                 <tr
-                  key={`${p.id}-${index}`}
-                  className={`border-t ${
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  } hover:bg-blue-50 transition`}
+                  key={p._id}
+                  className="border-t bg-white hover:bg-blue-50 transition"
                 >
-                  <td className="p-3">{p.id}</td>
                   <td className="p-3 font-medium">{p.name}</td>
                   <td className="p-3">${p.price}</td>
                   <td className="p-3">{p.stock}</td>
+                  <td className="p-3">{p.supplier}</td>
+                  <td className="p-3">{p.category}</td>
+                  <td className="p-3">{p.description}</td>
                   <td className="p-3 text-center space-x-2">
                     <button
                       onClick={() => handleEdit(p)}
@@ -136,7 +163,7 @@ export default function ProductsPage() {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => handleDelete(p._id)}
                       className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
                     >
                       Delete
@@ -146,7 +173,7 @@ export default function ProductsPage() {
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-4 text-center text-gray-500">
+                  <td colSpan={7} className="p-4 text-center text-gray-500">
                     No products available
                   </td>
                 </tr>
@@ -192,6 +219,29 @@ export default function ProductsPage() {
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
+                  className="border p-2 w-full rounded"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Supplier"
+                  value={supplier}
+                  onChange={(e) => setSupplier(e.target.value)}
+                  className="border p-2 w-full rounded"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="border p-2 w-full rounded"
+                  required
+                />
+                <textarea
+                  placeholder="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   className="border p-2 w-full rounded"
                   required
                 />
