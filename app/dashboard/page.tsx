@@ -7,6 +7,9 @@ import {
   FaWarehouse,
   FaShoppingCart,
   FaFileInvoice,
+  FaUser,
+  FaUsers,
+  FaTruck,
 } from "react-icons/fa";
 import api from "../utils/api";
 import axios from "axios";
@@ -15,7 +18,10 @@ interface Stats {
   totalProducts: number;
   totalStock: number;
   totalSales: number;
-  invoices: number;
+  totalInvoices: number;
+  totalCustomers: number;
+  totalSuppliers: number;
+  totalUsers: number;
 }
 
 interface User {
@@ -28,7 +34,10 @@ export default function Dashboard() {
     totalProducts: 0,
     totalStock: 0,
     totalSales: 0,
-    invoices: 0,
+    totalInvoices: 0,
+    totalCustomers: 0,
+    totalSuppliers: 0,
+    totalUsers: 0,
   });
 
   const [user, setUser] = useState<User | null>(null);
@@ -109,10 +118,31 @@ export default function Dashboard() {
             },
             {
               title: "Invoices",
-              value: stats.invoices,
+              value: stats.totalInvoices,
               icon: <FaFileInvoice className="text-3xl text-red-600" />,
               bg: "bg-red-100",
               hover: "group-hover:bg-red-200",
+            },
+            {
+              title: "Customers",
+              value: stats.totalCustomers,
+              icon: <FaUser className="text-3xl text-yellow-600" />,
+              bg: "bg-yellow-100",
+              hover: "group-hover:bg-yellow-200",
+            },
+            {
+              title: "Suppliers",
+              value: stats.totalSuppliers,
+              icon: <FaTruck className="text-3xl text-indigo-600" />,
+              bg: "bg-indigo-100",
+              hover: "group-hover:bg-indigo-200",
+            },
+            {
+              title: "Users",
+              value: stats.totalUsers,
+              icon: <FaUsers className="text-3xl text-pink-600" />,
+              bg: "bg-pink-100",
+              hover: "group-hover:bg-pink-200",
             },
           ].map((item, index) => (
             <div
