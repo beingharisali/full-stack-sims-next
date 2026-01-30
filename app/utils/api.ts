@@ -1,16 +1,17 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api", // important: points directly to app/api folder
+  baseURL: "http://localhost:5000/api/v1",
+  withCredentials: true,
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const message =
-      error.response?.data || error.message || "Something went wrong!";
+      error.response?.data?.message || error.message || "Something went wrong!";
     return Promise.reject(new Error(message));
-  }
+  },
 );
 
 export default api;

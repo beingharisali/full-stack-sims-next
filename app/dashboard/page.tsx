@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ProtectedRoute from "@/app/components/protectedroutes";
+import ProtectedRoute from "../components/protectedroutes";
 import {
   FaBox,
   FaWarehouse,
   FaShoppingCart,
   FaFileInvoice,
 } from "react-icons/fa";
-import api from "@/app/utils/api";
+import api from "../utils/api";
 import axios from "axios";
 
 interface Stats {
@@ -33,99 +33,57 @@ export default function Dashboard() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true); // ✅ NEW
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [ageSeconds, setAgeSeconds] = useState(0);
 
   const fetchData = async () => {
     try {
       setErrorMsg(null);
 
       if (!user) {
-        const userRes = await api.get("/user");
-        setUser(userRes.data);
-        localStorage.setItem("user", JSON.stringify(userRes.data));
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) setUser(JSON.parse(storedUser));
       }
 
-      const statsRes = await api.get("/stats");
-      setStats(statsRes.data);
+      const statsRes = await api.get("/dashboard");
 
-      setLastUpdated(new Date());
-      setAgeSeconds(0);
+      setStats(statsRes.data);
     } catch (err: unknown) {
       let message = "Something went wrong!";
       if (axios.isAxiosError(err)) {
         message =
-          err.response?.data?.message ||
-          err.response?.data ||
-          err.message;
+          err.response?.data?.message || err.response?.data || err.message;
       } else if (err instanceof Error) {
         message = err.message;
       }
       setErrorMsg(message);
     } finally {
-      if (initialLoad) {
-        setLoading(false);
-        setInitialLoad(false);
-      }
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-
-    const fetchInterval = setInterval(fetchData, 3000);
-    const ageInterval = setInterval(
-      () => setAgeSeconds((prev) => prev + 1),
-      1000
-    );
-
-    return () => {
-      clearInterval(fetchInterval);
-      clearInterval(ageInterval);
-    };
   }, []);
 
   if (loading) {
-    return (
-      <p className="text-center mt-10 text-gray-500">
-        Loading...
-      </p>
-    );
+    return <p className="text-center mt-10 text-gray-500">Loading...</p>;
   }
 
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
       <div className="p-6">
-        <h1 className="text-center text-3xl font-bold mb-2">
-          Dashboard
-        </h1>
+        <h1 className="text-center text-3xl font-bold mb-2">Dashboard</h1>
 
         {user && (
-          <p className="text-center text-gray-500 mb-2">
-            Role:{" "}
-            <span className="font-semibold">
-              {user.role}
-            </span>
-          </p>
-        )}
-
-        {lastUpdated && (
-          <p className="text-center text-gray-400 mb-6 text-sm">
-            Last updated:{" "}
-            {lastUpdated.toLocaleTimeString()} (
-            {ageSeconds} seconds ago)
+          <p className="text-center text-gray-500 mb-6">
+            Role: <span className="font-semibold">{user.role}</span>
           </p>
         )}
 
         {errorMsg && (
-          <p className="text-center text-red-500 mb-4">
-            {errorMsg}
-          </p>
+          <p className="text-center text-red-500 mb-4">{errorMsg}</p>
         )}
 
-        {/* 🔥 SAME UI AS BEFORE */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
