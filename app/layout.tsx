@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
-import { AuthProvider, useAuth } from "../context/authcontext";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 import { Toaster } from "react-hot-toast";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
