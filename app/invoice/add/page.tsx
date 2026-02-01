@@ -1,138 +1,87 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import ProtectedRoute from "../../components/protectedroutes";
-import api from "../../utils/api";
+import api from "../..//utils/api";
 
-export default function AddInvoicePage() {
-  const router = useRouter();
+interface Customer {
+  _id: string;
+  name: string;
+  contactNumber: string;
+  category: string;
+  status: string;
+  orderitems: number;
+}
 
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState<number | "">("");
-  const [status, setStatus] = useState("draft");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+export default function SalerPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-
-    const numericAmount = Number(amount);
-
-    const payload = {
-      invoice_number: `INV-${Date.now()}`,
-      customer_name: customerName,
-      customer_email: customerEmail,
-
-      items: [
-        {
-          description,
-          quantity: 1,
-          unit_price: numericAmount,
-          total_price: numericAmount,
-        },
-      ],
-
-      subtotal: numericAmount,
-      tax_amount: 0,
-      discount_amount: 0,
-      total_amount: numericAmount,
-      status,
-    };
-
-    console.log("🚀 Sending invoice payload:", payload);
-
+  const fetchCustomers = async () => {
     try {
-      const res = await api.post("/invoice", payload);
-      console.log("✅ Invoice created:", res.data);
-      router.push("/invoice");
+      setLoading(true);
+      setError("");
+      const res = await api.get("/customers"); // backend route to fetch all customers
+      if (res.data.success) {
+        setCustomers(res.data.data); // assuming backend returns { success, data }
+      } else {
+        setError(res.data.message || "Failed to fetch customers");
+      }
     } catch (err: any) {
-      console.error(
-        "❌ Create invoice error:",
-        err.response?.data || err.message,
-      );
-      setErrorMsg(err.response?.data?.message || "Unable to create invoice");
+      setError(err.response?.data?.message || err.message || "Server error");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
   return (
-    <ProtectedRoute allowedRoles={["admin", "sales"]}>
-      <div className="max-w-md mx-auto mt-10 bg-white p-6 shadow rounded">
-        <h2 className="text-2xl font-bold mb-4">Add Invoice</h2>
+    <ProtectedRoute allowedRoles={["saler"]}>
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold mb-5 text-center">
+          Customer Orders
+        </h1>
 
-        {errorMsg && <p className="text-red-500 mb-3">{errorMsg}</p>}
+        {loading && <p className="text-center text-gray-500">Loading...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            placeholder="Customer Name"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="border p-2 w-full rounded"
-            required
-          />
-
-          <input
-            type="email"
-            placeholder="Customer Email"
-            value={customerEmail}
-            onChange={(e) => setCustomerEmail(e.target.value)}
-            className="border p-2 w-full rounded"
-            required
-          />
-
-          <input
-            placeholder="Item Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="border p-2 w-full rounded"
-            required
-          />
-
-          <input
-            type="number"
-            placeholder="Amount"
-            min={200}
-            value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value === "" ? "" : Number(e.target.value))
-            }
-            className="border p-2 w-full rounded"
-            required
-          />
-
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="border p-2 w-full rounded"
-          >
-            <option value="draft">Draft</option>
-            <option value="sent">Sent</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
-          </select>
-
-          <div className="flex gap-2">
-            <button
-              disabled={loading}
-              className="bg-green-600 text-white px-4 py-2 rounded"
-            >
-              {loading ? "Saving..." : "Save"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/invoice")}
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
+        {!loading && !error && (
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-300">
+              <thead className="bg-gray-500 text-white">
+                <tr>
+                  <th className="border px-4 py-2">#</th>
+                  <th className="border px-4 py-2">Name</th>
+                  <th className="border px-4 py-2">Contact Number</th>
+                  <th className="border px-4 py-2">Category</th>
+                  <th className="border px-4 py-2">Status</th>
+                  <th className="border px-4 py-2">Order Items</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((c, idx) => (
+                  <tr
+                    key={c._id}
+                    className={`border-t ${
+                      idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-blue-50 transition`}
+                  >
+                    <td className="border px-4 py-2">{idx + 1}</td>
+                    <td className="border px-4 py-2">{c.name}</td>
+                    <td className="border px-4 py-2">{c.contactNumber}</td>
+                    <td className="border px-4 py-2">{c.category}</td>
+                    <td className="border px-4 py-2">{c.status}</td>
+                    <td className="border px-4 py-2">{c.orderitems}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </form>
+        )}
       </div>
     </ProtectedRoute>
   );
