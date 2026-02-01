@@ -54,8 +54,11 @@ export default function Dashboard() {
       }
 
       const statsRes = await api.get("/dashboard");
+      const currentStats = statsRes.data;
+      const salesRes = await api.get("/invoice/total/sales");
+      const totalSales = salesRes.data.totalSales;
 
-      setStats(statsRes.data);
+      setStats({ ...currentStats, totalSales });
     } catch (err: unknown) {
       let message = "Something went wrong!";
       if (axios.isAxiosError(err)) {
