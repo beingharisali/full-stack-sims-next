@@ -2,19 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
+import api from "../utils/api";
 
 type InventoryItem = {
   id: number;
+  _id: string;
   product: string;
   quantity: number;
   location: string;
 };
-
-const DEFAULT_INVENTORY: InventoryItem[] = [
-  { id: 1, product: "Laptop", quantity: 10, location: "Warehouse A" },
-  { id: 2, product: "Mouse", quantity: 25, location: "Warehouse B" },
-  { id: 3, product: "Keyboard", quantity: 15, location: "Warehouse A" },
-];
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -22,43 +18,62 @@ export default function InventoryPage() {
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("inventory");
-
-    if (stored) {
-      const parsed = JSON.parse(stored);
-
-      if (parsed.length === 0) {
-        setItems(DEFAULT_INVENTORY);
-        localStorage.setItem("inventory", JSON.stringify(DEFAULT_INVENTORY));
-      } else {
-        setItems(parsed);
+    const fetchInventory = async () => {
+      try {
+        const res = await api.get("/inventory/get");
+        if (res.data.success) {
+          const backendItems = res.data.data.map(
+            (item: any, index: number) => ({
+              id: index + 1,
+              _id: item._id,
+              product: item.productName,
+              quantity: item.quantity,
+              location: item.location || "Warehouse",
+            }),
+          );
+          setItems(backendItems);
+        }
+      } catch (err: any) {
+        console.error("Error fetching inventory:", err.message);
       }
-    } else {
-      setItems(DEFAULT_INVENTORY);
-      localStorage.setItem("inventory", JSON.stringify(DEFAULT_INVENTORY));
-    }
+    };
+
+    fetchInventory();
   }, []);
 
-  useEffect(() => {
-    if (items.length > 0) {
-      localStorage.setItem("inventory", JSON.stringify(items));
+  const handleDelete = async (id: number) => {
+    try {
+      const itemToDelete = items.find((i) => i.id === id);
+      if (!itemToDelete) return;
+      await api.delete(`/inventory/delete/${itemToDelete._id}`);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } catch (err: any) {
+      console.error("Delete failed:", err.message);
     }
-  }, [items]);
-
-  const handleDelete = (id: number) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editItem) return;
 
-    setItems((prev) => prev.map((i) => (i.id === editItem.id ? editItem : i)));
-    setEditItem(null);
+    try {
+      await api.put(`/inventory/update/${editItem._id}`, {
+        productName: editItem.product,
+        quantity: editItem.quantity,
+        location: editItem.location,
+      });
+
+      setItems((prev) =>
+        prev.map((i) => (i.id === editItem.id ? editItem : i)),
+      );
+      setEditItem(null);
+    } catch (err: any) {
+      console.error("Update failed:", err.message);
+    }
   };
 
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
-      <div>
+      <div className="p-6">
         <div className="mb-6 flex items-center justify-between">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-4 shadow rounded">
