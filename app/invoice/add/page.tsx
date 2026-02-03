@@ -1,87 +1,87 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import ProtectedRoute from "../../components/protectedroutes";
+import api from "../..//utils/api";
 
-export default function AddInvoicePage() {
-  const router = useRouter();
+interface Customer {
+  _id: string;
+  name: string;
+  contactNumber: string;
+  category: string;
+  status: string;
+  orderitems: number;
+}
 
-  const [customer, setCustomer] = useState("");
-  const [amount, setAmount] = useState<number | "">("");
-  const [status, setStatus] = useState("");
+export default function SalerPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const stored = localStorage.getItem("invoices");
-    const invoices = stored ? JSON.parse(stored) : [];
-
-    const nextId =
-      invoices.length > 0 ? invoices[invoices.length - 1].id + 1 : 1;
-
-    invoices.push({
-      id: nextId,
-      customer,
-      amount: Number(amount),
-      status,
-    });
-
-    localStorage.setItem("invoices", JSON.stringify(invoices));
-
-    router.push("/invoice");
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await api.get("/customers"); // backend route to fetch all customers
+      if (res.data.success) {
+        setCustomers(res.data.data); // assuming backend returns { success, data }
+      } else {
+        setError(res.data.message || "Failed to fetch customers");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || "Server error");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
   return (
-    <ProtectedRoute allowedRoles={["admin", "sales"]}>
-      <div className="max-w-md mx-auto mt-10 bg-white p-6 shadow rounded">
-        <h2 className="text-2xl font-bold mb-4">Add Invoice</h2>
+    <ProtectedRoute allowedRoles={["saler"]}>
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold mb-5 text-center">
+          Customer Orders
+        </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            placeholder="Customer Name"
-            value={customer}
-            onChange={(e) => setCustomer(e.target.value)}
-            className="border p-2 w-full rounded"
-            required
-          />
+        {loading && <p className="text-center text-gray-500">Loading...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
 
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value === "" ? "" : Number(e.target.value))
-            }
-            className="border p-2 w-full rounded"
-            required
-          />
-
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="border p-2 w-full rounded"
-            required
-          >
-            <option value="" disabled>
-              Select Status
-            </option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-          </select>
-
-          <div className="flex gap-2">
-            <button className="bg-green-600 text-white px-4 py-2 rounded">
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/invoice")}
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
+        {!loading && !error && (
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-300">
+              <thead className="bg-gray-500 text-white">
+                <tr>
+                  <th className="border px-4 py-2">#</th>
+                  <th className="border px-4 py-2">Name</th>
+                  <th className="border px-4 py-2">Contact Number</th>
+                  <th className="border px-4 py-2">Category</th>
+                  <th className="border px-4 py-2">Status</th>
+                  <th className="border px-4 py-2">Order Items</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((c, idx) => (
+                  <tr
+                    key={c._id}
+                    className={`border-t ${
+                      idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-blue-50 transition`}
+                  >
+                    <td className="border px-4 py-2">{idx + 1}</td>
+                    <td className="border px-4 py-2">{c.name}</td>
+                    <td className="border px-4 py-2">{c.contactNumber}</td>
+                    <td className="border px-4 py-2">{c.category}</td>
+                    <td className="border px-4 py-2">{c.status}</td>
+                    <td className="border px-4 py-2">{c.orderitems}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </form>
+        )}
       </div>
     </ProtectedRoute>
   );

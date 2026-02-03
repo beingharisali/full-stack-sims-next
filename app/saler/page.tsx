@@ -1,9 +1,44 @@
 "use client";
 
-import React from "react";
-import ProtectedRoute from "@/app/components/protectedroutes";
+import React, { useEffect, useState } from "react";
+import ProtectedRoute from "../components/protectedroutes";
+import api from "../utils/api";
+
+type Saler = {
+  _id: string;
+  name: string;
+  contactNumber: string;
+  category: string;
+  status: string;
+  orderitems: number;
+};
 
 export default function SalerPage() {
+  const [salers, setSalers] = useState<Saler[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const fetchSalers = async () => {
+      try {
+        const res = await api.get("/saler"); // your backend route
+        if (res.data.success) {
+          setSalers(res.data.data);
+        } else {
+          setErrorMsg(res.data.message || "Failed to fetch salers");
+        }
+      } catch (err: any) {
+        setErrorMsg(
+          err.response?.data?.message || err.message || "Server Error",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSalers();
+  }, []);
+
   return (
     <ProtectedRoute allowedRoles={["saler"]}>
       <div className="p-6">
@@ -11,47 +46,34 @@ export default function SalerPage() {
           Welcome to Sales Page
         </h1>
 
-        <table className="w-full border border-gray-300">
-          <thead className="bg-gray-500 text-white">
-            <tr>
-              <th className="border px-4 py-2">Order ID</th>
-              <th className="border px-4 py-2">Name</th>
-              <th className="border px-4 py-2">Contact Number</th>
-              <th className="border px-4 py-2">Category</th>
-              <th className="border px-4 py-2">Status</th>
-              <th className="border px-4 py-2">Order Items</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr>
-              <td className="border px-4 py-2">001</td>
-              <td className="border px-4 py-2">Salar Hasan</td>
-              <td className="border px-4 py-2">0300-1234566</td>
-              <td className="border px-4 py-2">Samsung</td>
-              <td className="border px-4 py-2">Completed</td>
-              <td className="border px-4 py-2">23</td>
-            </tr>
-
-            <tr>
-              <td className="border px-4 py-2">002</td>
-              <td className="border px-4 py-2">Taimoor Shah</td>
-              <td className="border px-4 py-2">0301-1232566</td>
-              <td className="border px-4 py-2">Sonic Headphones</td>
-              <td className="border px-4 py-2">Completed</td>
-              <td className="border px-4 py-2">40</td>
-            </tr>
-
-            <tr>
-              <td className="border px-4 py-2">003</td>
-              <td className="border px-4 py-2">Hasan Ali</td>
-              <td className="border px-4 py-2">0311-1232566</td>
-              <td className="border px-4 py-2">Audionic Speakers</td>
-              <td className="border px-4 py-2">Completed</td>
-              <td className="border px-4 py-2">30</td>
-            </tr>
-          </tbody>
-        </table>
+        {loading ? (
+          <p className="text-center">Loading...</p>
+        ) : errorMsg ? (
+          <p className="text-center text-red-500">{errorMsg}</p>
+        ) : (
+          <table className="w-full border border-gray-300">
+            <thead className="bg-gray-500 text-white">
+              <tr>
+                <th className="border px-4 py-2">Name</th>
+                <th className="border px-4 py-2">Contact Number</th>
+                <th className="border px-4 py-2">Category</th>
+                <th className="border px-4 py-2">Status</th>
+                <th className="border px-4 py-2">Order Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              {salers.map((saler) => (
+                <tr key={saler._id} className="hover:bg-blue-50 transition">
+                  <td className="border px-4 py-2">{saler.name}</td>
+                  <td className="border px-4 py-2">{saler.contactNumber}</td>
+                  <td className="border px-4 py-2">{saler.category}</td>
+                  <td className="border px-4 py-2">{saler.status}</td>
+                  <td className="border px-4 py-2">{saler.orderitems}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </ProtectedRoute>
   );

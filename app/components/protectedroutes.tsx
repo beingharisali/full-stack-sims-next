@@ -20,14 +20,14 @@ export default function ProtectedRoute({
     const storedUser = localStorage.getItem("user");
 
     if (!storedUser) {
-      router.replace("/");
+      router.replace("/unauthorized");
       return;
     }
 
     const user = JSON.parse(storedUser);
 
     if (!allowedRoles.includes(user.role)) {
-      router.replace("/");
+      router.replace("/unauthorized");
       return;
     }
 
