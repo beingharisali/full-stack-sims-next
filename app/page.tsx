@@ -47,7 +47,7 @@ export default function LoginPage() {
       );
 
       if (form.role === "admin") router.push("/dashboard");
-      else if (form.role === "manager") router.push("/manager");
+      else if (form.role === "manager") router.push("/products");
       else if (form.role === "saler") router.push("/saler");
       else router.push("/");
     } catch (error: any) {

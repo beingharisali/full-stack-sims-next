@@ -20,16 +20,24 @@ export default function ProtectedRoute({
     const storedUser = localStorage.getItem("user");
 
     if (!storedUser) {
+      setLoading(false);
       router.replace("/unauthorized");
       return;
     }
 
     const user = JSON.parse(storedUser);
+    const role = user?.role?.toLowerCase();
 
-    if (!allowedRoles.includes(user.role)) {
+    if (!role || !allowedRoles.map((r) => r.toLowerCase()).includes(role)) {
+      setLoading(false);
       router.replace("/unauthorized");
       return;
     }
+
+    // if (!allowedRoles.includes(user.role)) {
+    //   router.replace("/unauthorized");
+    //   return;
+    // }
 
     setAuthorized(true);
     setLoading(false);
