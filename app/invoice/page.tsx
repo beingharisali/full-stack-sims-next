@@ -73,12 +73,12 @@ export default function InvoicePage() {
   const totalAmount = invoices.reduce((sum, i) => sum + i.total_amount, 0);
 
   return (
-    <ProtectedRoute allowedRoles={["admin", "manager"]}>
+    <ProtectedRoute allowedRoles={["admin", "manger"]}>
       <div className="p-6">
         <div className="mb-6 flex flex-col md:flex-row md:justify-between gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-500">Total Invoices</h2>
+              <h2 className="text-gray-600">Total Invoices</h2>
               <p className="text-2xl font-bold">{invoices.length}</p>
             </div>
             <div className="bg-white p-4 shadow rounded">
