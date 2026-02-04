@@ -3,65 +3,89 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
+import api from "../utils/api"; // make sure this axios instance points to your backend
 
 type Sale = {
-  id: number;
-  product: string;
+  _id: string;
+  productName: string;
   quantity: number;
   total: number;
 };
 
 export default function SalesPage() {
   const router = useRouter();
-
-  const defaultSales: Sale[] = [
-    { id: 1, product: "Laptop", quantity: 2, total: 2400 },
-    { id: 2, product: "Mouse", quantity: 5, total: 100 },
-    { id: 3, product: "Keyboard", quantity: 3, total: 150 },
-  ];
-
   const [sales, setSales] = useState<Sale[]>([]);
   const [editing, setEditing] = useState<Sale | null>(null);
   const [product, setProduct] = useState("");
   const [quantity, setQuantity] = useState<number | "">("");
   const [total, setTotal] = useState<number | "">("");
 
-  // load sales
+  // Get user role from localStorage
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "{}")
+      : null;
+  const role = user?.role;
+
+  // Fetch sales from backend
   useEffect(() => {
-    const stored = localStorage.getItem("sales");
-    const userSales: Sale[] = stored ? JSON.parse(stored) : [];
-    setSales([...defaultSales, ...userSales]);
+    const fetchSales = async () => {
+      try {
+        const res = await api.get("http://localhost:5000/api/v1/sales/get");
+        if (res.data.success) {
+          setSales(res.data.data);
+        }
+      } catch (err: any) {
+        console.error("Error fetching sales:", err.message);
+      }
+    };
+
+    fetchSales();
   }, []);
 
-  const save = (data: Sale[]) => {
-    setSales(data);
-    const userSales = data.filter((s) => s.id > 3);
-    localStorage.setItem("sales", JSON.stringify(userSales));
-  };
-
-  const handleDelete = (id: number) => {
-    save(sales.filter((s) => s.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/sales/delete/${id}`);
+      setSales((prev) => prev.filter((s) => s._id !== id));
+    } catch (err: any) {
+      console.error("Delete failed:", err.message);
+    }
   };
 
   const handleEdit = (sale: Sale) => {
     setEditing(sale);
-    setProduct(sale.product);
+    setProduct(sale.productName);
     setQuantity(sale.quantity);
     setTotal(sale.total);
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
 
-    const updated = sales.map((s) =>
-      s.id === editing.id
-        ? { ...s, product, quantity: Number(quantity), total: Number(total) }
-        : s,
-    );
+    try {
+      await api.put(`/sales/update/${editing._id}`, {
+        productName: product,
+        quantity: Number(quantity),
+        total: Number(total),
+      });
 
-    save(updated);
-    setEditing(null);
+      setSales((prev) =>
+        prev.map((s) =>
+          s._id === editing._id
+            ? {
+                ...s,
+                productName: product,
+                quantity: Number(quantity),
+                total: Number(total),
+              }
+            : s,
+        ),
+      );
+      setEditing(null);
+    } catch (err: any) {
+      console.error("Update failed:", err.message);
+    }
   };
 
   return (
@@ -95,9 +119,6 @@ export default function SalesPage() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-                  ID
-                </th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">
                   Product
                 </th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
@@ -112,34 +133,37 @@ export default function SalesPage() {
               </tr>
             </thead>
             <tbody>
-              {sales.map((s, index) => (
+              {sales.map((s) => (
                 <tr
-                  key={`${s.id}-${index}`}
-                  className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition`}
+                  key={s._id}
+                  className="border-t bg-white hover:bg-blue-50 transition"
                 >
-                  <td className="p-3">{s.id}</td>
-                  <td className="p-3 font-medium">{s.product}</td>
+                  <td className="p-3 font-medium">{s.productName}</td>
                   <td className="p-3">{s.quantity}</td>
                   <td className="p-3">${s.total}</td>
                   <td className="p-3 text-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(s)}
-                      className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
-                    >
-                      Delete
-                    </button>
+                    {["admin", "manager"].includes(role) && (
+                      <>
+                        <button
+                          onClick={() => handleEdit(s)}
+                          className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(s._id)}
+                          className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
               {sales.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-4 text-center text-gray-500">
+                  <td colSpan={4} className="p-4 text-center text-gray-500">
                     No sales available
                   </td>
                 </tr>
