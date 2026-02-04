@@ -1,14 +1,14 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
 
 type InventoryItem = {
-  id: number;
   _id: string;
   product: string;
-  quantity: number;
+  quantity: number; // Stock
   location: string;
 };
 
@@ -22,15 +22,12 @@ export default function InventoryPage() {
       try {
         const res = await api.get("/inventory/get");
         if (res.data.success) {
-          const backendItems = res.data.data.map(
-            (item: any, index: number) => ({
-              id: index + 1,
-              _id: item._id,
-              product: item.productName,
-              quantity: item.quantity,
-              location: item.location || "Warehouse",
-            }),
-          );
+          const backendItems = res.data.data.map((item: any) => ({
+            _id: item._id,
+            product: item.productName,
+            quantity: item.quantity,
+            location: item.location || "Warehouse",
+          }));
           setItems(backendItems);
         }
       } catch (err: any) {
@@ -41,12 +38,10 @@ export default function InventoryPage() {
     fetchInventory();
   }, []);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (_id: string) => {
     try {
-      const itemToDelete = items.find((i) => i.id === id);
-      if (!itemToDelete) return;
-      await api.delete(`/inventory/delete/${itemToDelete._id}`);
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      await api.delete(`/inventory/delete/${_id}`);
+      setItems((prev) => prev.filter((i) => i._id !== _id));
     } catch (err: any) {
       console.error("Delete failed:", err.message);
     }
@@ -63,13 +58,14 @@ export default function InventoryPage() {
       });
 
       setItems((prev) =>
-        prev.map((i) => (i.id === editItem.id ? editItem : i)),
+        prev.map((i) => (i._id === editItem._id ? editItem : i)),
       );
       setEditItem(null);
     } catch (err: any) {
       console.error("Update failed:", err.message);
     }
   };
+
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
       <div className="p-6">
@@ -99,17 +95,15 @@ export default function InventoryPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left">ID</th>
                 <th className="px-4 py-2 text-left">Product</th>
-                <th className="px-4 py-2 text-left">Quantity</th>
+                <th className="px-4 py-2 text-left">Stock</th>
                 <th className="px-4 py-2 text-left">Location</th>
                 <th className="px-4 py-2 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-2">{item.id}</td>
+                <tr key={item._id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-2">{item.product}</td>
                   <td className="px-4 py-2">{item.quantity}</td>
                   <td className="px-4 py-2">{item.location}</td>
@@ -121,7 +115,7 @@ export default function InventoryPage() {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item._id)}
                       className="bg-slate-500 text-white px-2 py-1 rounded"
                     >
                       Delete
@@ -151,10 +145,7 @@ export default function InventoryPage() {
                 className="border p-2 w-full mb-3 rounded"
                 value={editItem.quantity}
                 onChange={(e) =>
-                  setEditItem({
-                    ...editItem,
-                    quantity: Number(e.target.value),
-                  })
+                  setEditItem({ ...editItem, quantity: Number(e.target.value) })
                 }
               />
 

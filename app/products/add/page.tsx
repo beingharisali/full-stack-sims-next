@@ -13,13 +13,12 @@ export default function AddProductPage() {
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState<number | "">("");
   const [supplier, setSupplier] = useState("");
-  const [stock, setStock] = useState<number | "">("");
+  const [stock, setStock] = useState<number | "">(""); // stock input ab yahan hai
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (Number(price) < 0) {
       setErrorMsg("Price cannot be negative");
       return;
@@ -30,6 +29,7 @@ export default function AddProductPage() {
     }
 
     try {
+      // 1️⃣ Create Product
       const res = await axios.post(
         "http://localhost:5000/api/v1/products/create",
         {
@@ -38,12 +38,23 @@ export default function AddProductPage() {
           category,
           price: Number(price),
           supplier,
-          stock: Number(stock),
+          stock: Number(stock), // product me stock save
         },
       );
 
       if (res.data.success) {
-        router.push("/products");
+        // 2️⃣ Automatically add to Inventory with the same stock
+        await axios.post("http://localhost:5000/api/v1/inventory/create", {
+          productName: name,
+          quantity: Number(stock), // inventory me same stock
+          location: "Warehouse",
+          description,
+          category,
+          price: Number(price),
+          supplier,
+        });
+
+        router.push("/products"); // redirect to products page
       } else {
         setErrorMsg(res.data.message || "Unable to create product");
       }
@@ -91,7 +102,7 @@ export default function AddProductPage() {
             <option value="laptop">Laptop</option>
             <option value="headphones">Headphones</option>
             <option value="tablet">Tablet</option>
-            <option value="televison">Television</option>
+            <option value="television">Television</option>
             <option value="camera">Camera</option>
             <option value="smartwatch">Smartwatch</option>
             <option value="accessories">Accessories</option>
@@ -106,6 +117,7 @@ export default function AddProductPage() {
             className="border p-2 w-full rounded"
             required
           />
+
           <input
             type="number"
             placeholder="Price"
@@ -116,6 +128,7 @@ export default function AddProductPage() {
             className="border p-2 w-full rounded"
             required
           />
+
           <input
             type="number"
             placeholder="Stock"

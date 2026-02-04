@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import axios from "axios";
 
-const user =
-  typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("user") || "{}")
-    : null;
-
-const role = user?.role;
-
 type Product = {
   _id: string;
   name: string;
@@ -48,12 +41,22 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  const handleDelete = async (_id: string) => {
+  const handleDelete = async (productId: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/v1/products/delete/${_id}`);
-      setProducts(products.filter((p) => p._id !== _id));
-    } catch (err) {
-      console.error(err);
+      // 1️⃣ Delete product from Products table
+      await axios.delete(
+        `http://localhost:5000/api/v1/products/delete/${productId}`,
+      );
+
+      // 2️⃣ Delete product from Inventory table
+      await axios.delete(
+        `http://localhost:5000/api/v1/inventory/delete-by-product/${productId}`,
+      );
+
+      // 3️⃣ Update frontend state
+      setProducts((prev) => prev.filter((p) => p._id !== productId));
+    } catch (err: any) {
+      console.error("Delete failed:", err.response?.data || err.message);
     }
   };
 
@@ -168,14 +171,12 @@ export default function ProductsPage() {
                     >
                       Edit
                     </button>
-                    {role === "admin" && (
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleDelete(p._id)}
+                      className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
