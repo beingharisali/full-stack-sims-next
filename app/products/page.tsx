@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import axios from "axios";
 
+const user =
+  typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("user") || "{}")
+    : null;
+
+const role = user?.role;
+
 type Product = {
   _id: string;
   name: string;
@@ -27,7 +34,6 @@ export default function ProductsPage() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
 
-  // Fetch products from backend
   const fetchProducts = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/v1/products/get");
@@ -92,7 +98,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["admin"]}>
+    <ProtectedRoute allowedRoles={["admin", "manager"]}>
       <div className="p-6">
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,12 +168,14 @@ export default function ProductsPage() {
                     >
                       Edit
                     </button>
-                    <button
-                      onClick={() => handleDelete(p._id)}
-                      className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
-                    >
-                      Delete
-                    </button>
+                    {role === "admin" && (
+                      <button
+                        onClick={() => handleDelete(p._id)}
+                        className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

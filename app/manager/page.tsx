@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import ProtectedRoute from "@/app/components/protectedroutes";
+import ProtectedRoute from "../components/protectedroutes";
 
 export default function ManagerPage() {
   return (
