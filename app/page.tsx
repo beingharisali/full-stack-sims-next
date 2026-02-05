@@ -47,8 +47,8 @@ export default function LoginPage() {
       );
 
       if (form.role === "admin") router.push("/dashboard");
-      else if (form.role === "manager") router.push("/products");
-      else if (form.role === "saler") router.push("/saler");
+      else if (form.role === "manager") router.push("/inventory");
+      else if (form.role === "saler") router.push("/invoice/add");
       else router.push("/");
     } catch (error: any) {
       error.response?.data?.msg || "Login failed";
