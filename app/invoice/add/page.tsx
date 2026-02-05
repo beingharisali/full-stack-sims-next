@@ -121,16 +121,16 @@ export default function SalerInvoiceAdd() {
         createdBy: loggedInUser._id,
       };
 
-      // 1️⃣ Create invoice
+      // Create invoice
       await api.post("/invoice", invoiceData);
 
-      // 2️⃣ Create sales automatically
+      // Create sales automatically
       await api.post("/sales/create", {
         items: invoiceData.items,
         totalAmount: invoiceData.total_amount,
       });
 
-      // 3️⃣ Deduct stock
+      // Deduct stock
       await Promise.all(
         items.map((item) =>
           api.post("/stock/deduct", {
