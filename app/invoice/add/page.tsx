@@ -107,21 +107,6 @@ export default function SalerInvoiceAdd() {
       setLoading(true);
       setError("");
 
-      // Validate items before sending
-      for (const item of items) {
-        if (!item.productId) {
-          alert("Please select a product for all items");
-          return;
-        }
-        if (item.quantity <= 0) {
-          alert("Quantity must be at least 1");
-          return;
-        }
-        if (item.unit_price <= 0) {
-          alert("Unit price must be greater than 0");
-          return;
-        }
-      }
       const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
 
       const invoiceData = {
@@ -136,9 +121,16 @@ export default function SalerInvoiceAdd() {
         createdBy: loggedInUser._id,
       };
 
+      // 1️⃣ Create invoice
       await api.post("/invoice", invoiceData);
 
-      // Deduct stock
+      // 2️⃣ Create sales automatically
+      await api.post("/sales/create", {
+        items: invoiceData.items,
+        totalAmount: invoiceData.total_amount,
+      });
+
+      // 3️⃣ Deduct stock
       await Promise.all(
         items.map((item) =>
           api.post("/stock/deduct", {
