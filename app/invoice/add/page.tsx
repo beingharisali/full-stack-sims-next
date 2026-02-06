@@ -122,6 +122,7 @@ export default function SalerInvoiceAdd() {
           return;
         }
       }
+      const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
 
       const invoiceData = {
         customer_name: customerName,
@@ -132,6 +133,7 @@ export default function SalerInvoiceAdd() {
         discount_amount: 0,
         total_amount: subtotal,
         status: "paid",
+        createdBy: loggedInUser._id,
       };
 
       await api.post("/invoice", invoiceData);
