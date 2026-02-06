@@ -33,7 +33,7 @@ export default function AddSalePage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["sales", "admin"]}>
+    <ProtectedRoute allowedRoles={["sales", "admin", "saler"]}>
       <div className="max-w-md mx-auto mt-10 bg-white p-6 shadow rounded">
         <h2 className="text-xl font-bold mb-4">Add Sale</h2>
 

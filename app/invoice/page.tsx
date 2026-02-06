@@ -1,181 +1,156 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
+import { useRouter } from "next/navigation";
 
-type Invoice = {
-  _id: string;
-  invoice_number: string;
-  customer_name: string;
-  total_amount: number;
-  status: string;
-};
+interface ProductItem {
+  productId: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
 
 export default function InvoicePage() {
   const router = useRouter();
 
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ProductItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [editing, setEditing] = useState<Invoice | null>(null);
-  const [status, setStatus] = useState("");
+  const subtotal = items.reduce((sum, i) => sum + i.total_price, 0);
 
-  // 🔹 Fetch invoices from backend
-  const fetchInvoices = async () => {
+  const invoiceData = {
+    customer_name: "Test Customer",
+    customer_email: "test@gmail.com",
+    items,
+    subtotal,
+    tax_amount: 0,
+    discount_amount: 0,
+    total_amount: subtotal,
+    status: "paid",
+  };
+
+  const addItem = () => {
+    setItems([
+      ...items,
+      {
+        productId: "",
+        description: "",
+        quantity: 1,
+        unit_price: 0,
+        total_price: 0,
+      },
+    ]);
+  };
+
+  const updateItem = (index: number, field: string, value: any) => {
+    const updated = [...items];
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    };
+
+    if (field === "quantity" || field === "unit_price") {
+      updated[index].total_price =
+        updated[index].quantity * updated[index].unit_price;
+    }
+
+    setItems(updated);
+  };
+
+  const handleCreateInvoice = async () => {
     try {
-      const res = await api.get("/invoice");
-      setInvoices(res.data.data);
+      setLoading(true);
+      setError("");
+
+      // 1️⃣ Create invoice
+      await api.post("/invoice", invoiceData);
+
+      // 2️⃣ Create sales
+      await api.post("/sales/create", {
+        items: invoiceData.items,
+        totalAmount: invoiceData.total_amount,
+      });
+
+      // 3️⃣ Deduct stock
+      for (const item of invoiceData.items) {
+        await api.post("/stock/deduct", {
+          productId: item.productId,
+          quantity: item.quantity,
+        });
+      }
+
+      router.push("/sales");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load invoices");
+      setError(err.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  // 🔹 Delete invoice
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this invoice?")) return;
-
-    try {
-      await api.delete(`/invoice/${id}`);
-      setInvoices((prev) => prev.filter((i) => i._id !== id));
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Delete failed");
-    }
-  };
-
-  // 🔹 Edit invoice
-  const handleEdit = (inv: Invoice) => {
-    setEditing(inv);
-    setStatus(inv.status);
-  };
-
-  // 🔹 Update invoice
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      await api.put(`/invoice/${editing?._id}`, { status });
-      setEditing(null);
-      fetchInvoices();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Update failed");
-    }
-  };
-
-  const totalAmount = invoices.reduce((sum, i) => sum + i.total_amount, 0);
-
   return (
-    <ProtectedRoute allowedRoles={["admin", "manger"]}>
-      <div className="p-6">
-        <div className="mb-6 flex flex-col md:flex-row md:justify-between gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-600">Total Invoices</h2>
-              <p className="text-2xl font-bold">{invoices.length}</p>
-            </div>
-            <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-500">Total Amount</h2>
-              <p className="text-2xl font-bold">Rs. {totalAmount}</p>
-            </div>
+    <ProtectedRoute allowedRoles={["admin", "manager", "saler"]}>
+      <div className="p-6 max-w-4xl mx-auto">
+        <h1 className="text-2xl font-semibold mb-6 text-center">
+          Create Invoice
+        </h1>
+
+        {error && <p className="text-red-500 text-center mb-3">{error}</p>}
+
+        {items.map((item, idx) => (
+          <div key={idx} className="grid grid-cols-4 gap-3 mb-3">
+            <input
+              placeholder="Product ID"
+              className="border p-2"
+              value={item.productId}
+              onChange={(e) => updateItem(idx, "productId", e.target.value)}
+            />
+            <input
+              placeholder="Description"
+              className="border p-2"
+              value={item.description}
+              onChange={(e) => updateItem(idx, "description", e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Qty"
+              className="border p-2"
+              value={item.quantity}
+              onChange={(e) =>
+                updateItem(idx, "quantity", Number(e.target.value))
+              }
+            />
+            <input
+              type="number"
+              placeholder="Unit Price"
+              className="border p-2"
+              value={item.unit_price}
+              onChange={(e) =>
+                updateItem(idx, "unit_price", Number(e.target.value))
+              }
+            />
           </div>
+        ))}
 
-          <button
-            onClick={() => router.push("/invoice/add")}
-            className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
-          >
-            Add Invoice
-          </button>
-        </div>
+        <button
+          onClick={addItem}
+          className="bg-gray-600 text-white px-4 py-2 rounded mb-4"
+        >
+          + Add Item
+        </button>
 
-        {loading && <p>Loading...</p>}
-        {error && <p className="text-red-500">{error}</p>}
+        <div className="text-right font-semibold mb-4">Total: {subtotal}</div>
 
-        {!loading && (
-          <div className="bg-white shadow rounded overflow-hidden">
-            <table className="min-w-full">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-3 text-left">Invoice #</th>
-                  <th className="p-3 text-left">Customer</th>
-                  <th className="p-3 text-left">Amount</th>
-                  <th className="p-3 text-left">Status</th>
-                  <th className="p-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((i, index) => (
-                  <tr
-                    key={i._id}
-                    className={`border-t ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
-                  >
-                    <td className="p-3">{i.invoice_number}</td>
-                    <td className="p-3">{i.customer_name}</td>
-                    <td className="p-3">Rs. {i.total_amount}</td>
-                    <td className="p-3 capitalize">{i.status}</td>
-                    <td className="p-3 text-center space-x-2">
-                      <button
-                        onClick={() => handleEdit(i)}
-                        className="bg-teal-600 text-white px-3 py-1 rounded"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(i._id)}
-                        className="bg-slate-500 text-white px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {editing && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded w-full max-w-md">
-              <h2 className="text-lg font-semibold mb-4">Update Status</h2>
-
-              <form onSubmit={handleUpdate} className="space-y-3">
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="border p-2 w-full rounded"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="paid">Paid</option>
-                  <option value="overdue">Overdue</option>
-                </select>
-
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditing(null)}
-                    className="bg-gray-300 px-4 py-2 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded">
-                    Update
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <button
+          onClick={handleCreateInvoice}
+          disabled={loading}
+          className="bg-blue-600 text-white px-6 py-2 rounded w-full"
+        >
+          {loading ? "Creating..." : "Create Invoice"}
+        </button>
       </div>
     </ProtectedRoute>
   );
