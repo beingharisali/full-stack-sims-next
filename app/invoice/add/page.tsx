@@ -34,6 +34,27 @@ export default function SalerInvoiceAdd() {
 
   const subtotal = items.reduce((sum, i) => sum + i.total_price, 0);
 
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const user = localStorage.getItem("user");
+      if (!user) {
+        setError("User not logged in. Please login again.");
+        return;
+      }
+
+      const parsed = JSON.parse(user);
+      if (!parsed.token) {
+        setError("User not logged in. Please login again.");
+        return;
+      }
+
+      const payload = JSON.parse(atob(parsed.token.split(".")[1]));
+      setUserId(payload.userId);
+    }
+  }, []);
+
   // Fetch products from backend
   const fetchProducts = async () => {
     try {
@@ -95,6 +116,7 @@ export default function SalerInvoiceAdd() {
     updated[index] = item;
     setItems(updated);
   };
+  console.log("ITEMS:", items);
 
   // Create invoice
   const handleCreateInvoice = async () => {
@@ -107,9 +129,15 @@ export default function SalerInvoiceAdd() {
       setLoading(true);
       setError("");
 
-      const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
+      // ✅ Get logged-in user ID safely inside function
+      const userStr = localStorage.getItem("user");
+      if (!userStr) throw new Error("User not logged in. Please login again.");
 
-      const invoiceData = {
+      const user = JSON.parse(userStr);
+      const payload = JSON.parse(atob(user.token.split(".")[1]));
+      const userId = payload.userId || payload._id;
+
+      const invoiceDataWithUser = {
         customer_name: customerName,
         customer_email: customerEmail,
         items,
@@ -118,19 +146,19 @@ export default function SalerInvoiceAdd() {
         discount_amount: 0,
         total_amount: subtotal,
         status: "paid",
-        createdBy: loggedInUser._id,
+        createdBy: userId, // ✅ Required by backend
       };
 
-      // Create invoice
-      await api.post("/invoice", invoiceData);
+      // 1️⃣ Create invoice
+      await api.post("/invoice", invoiceDataWithUser);
 
-      // Create sales automatically
+      // 2️⃣ Create sales automatically
       await api.post("/sales/create", {
-        items: invoiceData.items,
-        totalAmount: invoiceData.total_amount,
+        items: invoiceDataWithUser.items,
+        totalAmount: invoiceDataWithUser.total_amount,
       });
 
-      // Deduct stock
+      // 3️⃣ Deduct stock
       await Promise.all(
         items.map((item) =>
           api.post("/stock/deduct", {
@@ -140,10 +168,12 @@ export default function SalerInvoiceAdd() {
         ),
       );
 
-      router.push("/invoice");
+      router.push("/invoice"); // redirect to invoice list
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || "Something went wrong");
+      setError(
+        err.message || err.response?.data?.message || "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }
