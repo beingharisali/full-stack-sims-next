@@ -1,20 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../../components/protectedroutes";
-import axios from "axios";
+import api from "../../utils/api";
+
+type Supplier = { _id: string; name: string; supplierGroup: string };
 
 export default function AddProductPage() {
   const router = useRouter();
 
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState<number | "">("");
   const [supplier, setSupplier] = useState("");
-  const [stock, setStock] = useState<number | "">(""); // stock input ab yahan hai
+  const [stock, setStock] = useState<number | "">("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const res = await api.get("/supplier/get");
+        if (res.data.success) setSuppliers(res.data.data || []);
+      } catch {
+        // ignore
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,41 +42,35 @@ export default function AddProductPage() {
       setErrorMsg("Stock cannot be negative");
       return;
     }
+    if (!supplier) {
+      setErrorMsg("Please select a supplier");
+      return;
+    }
 
     try {
-      // 1️⃣ Create Product
-      const res = await axios.post(
-        "http://localhost:5000/api/v1/products/create",
-        {
-          name,
-          description,
-          category,
-          price: Number(price),
-          supplier,
-          stock: Number(stock), // product me stock save
-        },
-      );
+      setErrorMsg(null);
+      const res = await api.post("/products/create", {
+        name,
+        description,
+        category,
+        price: Number(price),
+        supplier,
+        stock: Number(stock),
+      });
 
       if (res.data.success) {
-        // 2️⃣ Automatically add to Inventory with the same stock
-        await axios.post("http://localhost:5000/api/v1/inventory/create", {
-          productName: name,
-          quantity: Number(stock), // inventory me same stock
-          location: "Warehouse",
-          description,
-          category,
-          price: Number(price),
-          supplier,
-        });
-
-        router.push("/products"); // redirect to products page
+        router.push("/products");
       } else {
         setErrorMsg(res.data.message || "Unable to create product");
       }
-    } catch (error: any) {
-      setErrorMsg(
-        error.response?.data?.message || error.message || "Server error",
-      );
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : err instanceof Error
+            ? err.message
+            : "Server error";
+      setErrorMsg(String(msg));
     }
   };
 
@@ -109,14 +118,19 @@ export default function AddProductPage() {
             <option value="home-appliances">Home Appliances</option>
           </select>
 
-          <input
-            type="text"
-            placeholder="Supplier Name"
+          <select
             value={supplier}
             onChange={(e) => setSupplier(e.target.value)}
             className="border p-2 w-full rounded"
             required
-          />
+          >
+            <option value="">Select supplier</option>
+            {suppliers.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name} ({s.supplierGroup})
+              </option>
+            ))}
+          </select>
 
           <input
             type="number"

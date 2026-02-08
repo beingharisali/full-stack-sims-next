@@ -3,21 +3,31 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
-import axios from "axios";
+import api from "../utils/api";
+
+type Supplier = { _id: string; name: string; supplierGroup: string };
 
 type Product = {
   _id: string;
   name: string;
   price: number;
   stock: number;
-  supplier: string;
+  supplier?: string | { _id: string; name?: string; supplierGroup?: string };
   category: string;
   description: string;
 };
 
+function supplierLabel(p: Product): string {
+  const s = p.supplier;
+  if (!s) return "—";
+  if (typeof s === "string") return s;
+  return s.name || s.supplierGroup || s._id || "—";
+}
+
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
 
   const [name, setName] = useState("");
@@ -29,9 +39,17 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/v1/products/get");
-      console.log(res.data);
-      setProducts(res.data.data);
+      const res = await api.get("/products/get");
+      if (res.data.success) setProducts(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const res = await api.get("/supplier/get");
+      if (res.data.success) setSuppliers(res.data.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -39,24 +57,20 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
+    fetchSuppliers();
   }, []);
 
   const handleDelete = async (productId: string) => {
     try {
-      // 1️⃣ Delete product from Products table
-      await axios.delete(
-        `http://localhost:5000/api/v1/products/delete/${productId}`,
-      );
-
-      // 2️⃣ Delete product from Inventory table
-      await axios.delete(
-        `http://localhost:5000/api/v1/inventory/delete-by-product/${productId}`,
-      );
-
-      // 3️⃣ Update frontend state
+      await api.delete(`/products/delete/${productId}`);
+      try {
+        await api.delete(`/inventory/delete-by-product/${productId}`);
+      } catch {
+        // ignore if no such route or no inventory
+      }
       setProducts((prev) => prev.filter((p) => p._id !== productId));
-    } catch (err: any) {
-      console.error("Delete failed:", err.response?.data || err.message);
+    } catch (err: unknown) {
+      console.error("Delete failed:", err);
     }
   };
 
@@ -65,7 +79,11 @@ export default function ProductsPage() {
     setName(product.name);
     setPrice(product.price);
     setStock(product.stock);
-    setSupplier(product.supplier);
+    const sid =
+      typeof product.supplier === "object" && product.supplier
+        ? product.supplier._id
+        : (product.supplier as string) || "";
+    setSupplier(sid);
     setCategory(product.category);
     setDescription(product.description);
   };
@@ -75,23 +93,23 @@ export default function ProductsPage() {
     if (!editing) return;
 
     try {
-      const updatedProduct = {
+      const payload = {
         name,
         price: Number(price),
         stock: Number(stock),
-        supplier,
+        supplier: supplier || undefined,
         category,
         description,
       };
 
-      await axios.put(
-        `http://localhost:5000/api/v1/products/update/${editing._id}`,
-        updatedProduct,
+      const res = await api.put(
+        `/products/update/${editing._id}`,
+        payload,
       );
 
-      setProducts(
-        products.map((p) =>
-          p._id === editing._id ? { ...p, ...updatedProduct } : p,
+      setProducts((prev) =>
+        prev.map((p) =>
+          p._id === editing._id ? { ...p, ...payload, supplier: res.data?.data?.supplier ?? p.supplier } : p,
         ),
       );
       setEditing(null);
@@ -161,7 +179,7 @@ export default function ProductsPage() {
                   <td className="p-3 font-medium">{p.name}</td>
                   <td className="p-3">${p.price}</td>
                   <td className="p-3">{p.stock}</td>
-                  <td className="p-3">{p.supplier}</td>
+                  <td className="p-3">{supplierLabel(p)}</td>
                   <td className="p-3">{p.category}</td>
                   <td className="p-3">{p.description}</td>
                   <td className="p-3 text-center space-x-2">
@@ -231,14 +249,18 @@ export default function ProductsPage() {
                   className="border p-2 w-full rounded"
                   required
                 />
-                <input
-                  type="text"
-                  placeholder="Supplier"
+                <select
                   value={supplier}
                   onChange={(e) => setSupplier(e.target.value)}
                   className="border p-2 w-full rounded"
-                  required
-                />
+                >
+                  <option value="">Select supplier (optional)</option>
+                  {suppliers.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name} ({s.supplierGroup})
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   placeholder="Category"
