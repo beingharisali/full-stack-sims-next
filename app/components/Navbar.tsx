@@ -26,6 +26,7 @@ export default function Navbar() {
     inventory: ["admin", "manager"],
     sales: ["admin", "manager", "saler"],
     invoice: ["admin", "manager"],
+    suppliers: ["admin"],
   };
 
   const links = [
@@ -33,6 +34,7 @@ export default function Navbar() {
     { name: "Inventory", href: "/inventory" },
     { name: "Sales", href: "/sales" },
     { name: "Invoice", href: "/invoice" },
+    { name: "Suppliers", href: "/admin/suppliers" },
   ];
 
   return (

@@ -34,39 +34,21 @@ export default function SalerInvoiceAdd() {
 
   const subtotal = items.reduce((sum, i) => sum + i.total_price, 0);
 
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const user = localStorage.getItem("user");
-      if (!user) {
-        setError("User not logged in. Please login again.");
-        return;
-      }
-
-      const parsed = JSON.parse(user);
-      if (!parsed.token) {
-        setError("User not logged in. Please login again.");
-        return;
-      }
-
-      const payload = JSON.parse(atob(parsed.token.split(".")[1]));
-      setUserId(payload.userId);
-    }
-  }, []);
-
   // Fetch products from backend
   const fetchProducts = async () => {
     try {
-      const res = await api.get("http://localhost:5000/api/v1/products/get");
+      const res = await api.get("/products/get");
       if (res.data.success) {
         setProducts(res.data.data);
-        console.log("Products from backend:", res.data);
       } else {
         setError(res.data.message || "Failed to fetch products");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Server error");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : err instanceof Error ? err.message : "Server error";
+      setError(String(msg));
     }
   };
 
@@ -116,9 +98,7 @@ export default function SalerInvoiceAdd() {
     updated[index] = item;
     setItems(updated);
   };
-  console.log("ITEMS:", items);
-
-  // Create invoice
+  // Create invoice (backend auto-generates sales from invoice items)
   const handleCreateInvoice = async () => {
     if (!customerName || !customerEmail || items.length === 0) {
       alert("Please fill customer info and add at least one item");
@@ -129,58 +109,52 @@ export default function SalerInvoiceAdd() {
       setLoading(true);
       setError("");
 
-      // ✅ Get logged-in user ID safely inside function
-      const userStr = localStorage.getItem("user");
-      if (!userStr) throw new Error("User not logged in. Please login again.");
+      let createdBy: string | null = null;
+      const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.token) {
+            const payload = JSON.parse(atob(user.token.split(".")[1]));
+            createdBy = payload.userId || payload._id || null;
+          }
+        } catch {
+          // ignore
+        }
+      }
 
-      const user = JSON.parse(userStr);
-      const payload = JSON.parse(atob(user.token.split(".")[1]));
-      const userId = payload.userId || payload._id;
-
-      const invoiceDataWithUser = {
+      const invoicePayload = {
         customer_name: customerName,
         customer_email: customerEmail,
-        items,
+        items: items.map(({ productId, description, quantity, unit_price, total_price }) => ({
+          description,
+          quantity,
+          unit_price,
+          total_price,
+        })),
         subtotal,
         tax_amount: 0,
         discount_amount: 0,
         total_amount: subtotal,
         status: "paid",
-        createdBy: userId, // ✅ Required by backend
+        ...(createdBy && { createdBy }),
       };
 
-      // 1️⃣ Create invoice
-      await api.post("/invoice", invoiceDataWithUser);
-
-      // 2️⃣ Create sales automatically
-      await api.post("/sales/create", {
-        items: invoiceDataWithUser.items,
-        totalAmount: invoiceDataWithUser.total_amount,
-      });
-
-      // 3️⃣ Deduct stock
-      await Promise.all(
-        items.map((item) =>
-          api.post("/stock/deduct", {
-            productId: item.productId,
-            quantity: item.quantity,
-          }),
-        ),
-      );
-
-      router.push("/invoice"); // redirect to invoice list
-    } catch (err: any) {
-      console.error(err);
-      setError(
-        err.message || err.response?.data?.message || "Something went wrong",
-      );
+      await api.post("/invoice", invoicePayload);
+      router.push("/invoice");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : err instanceof Error ? err.message : "Something went wrong";
+      setError(String(msg));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ProtectedRoute allowedRoles={["saler"]}>
+    <ProtectedRoute allowedRoles={["admin", "manager", "saler"]}>
       <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded-lg">
         <h1 className="text-2xl font-semibold mb-6 text-center">
           Create Invoice

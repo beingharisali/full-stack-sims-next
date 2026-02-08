@@ -1,15 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
 
 interface InvoiceItem {
-  productId: string;
+  productId?: string;
   description: string;
   quantity: number;
   unit_price: number;
   total_price: number;
+}
+
+interface CreatedBy {
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
 interface Invoice {
@@ -23,15 +31,27 @@ interface Invoice {
   total_amount: number;
   status: string;
   createdAt: string;
-  createdBy?: string;
+  createdBy?: string | CreatedBy;
+  createdByName?: string | null;
+}
+
+function createdByLabel(invoice: Pick<Invoice, "createdByName" | "createdBy">): string {
+  if (invoice.createdByName && invoice.createdByName.trim()) return invoice.createdByName;
+  const createdBy = invoice.createdBy;
+  if (!createdBy) return "—";
+  if (typeof createdBy === "string") return createdBy;
+  const c = createdBy as CreatedBy;
+  if (c.firstName || c.lastName) return [c.firstName, c.lastName].filter(Boolean).join(" ");
+  if (c.email) return c.email;
+  return c._id ? String(c._id) : "—";
 }
 
 export default function InvoicePage() {
+  const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch all invoices
   const fetchInvoices = async () => {
     try {
       setLoading(true);
@@ -42,9 +62,12 @@ export default function InvoicePage() {
       } else {
         setError(res.data.message || "Failed to fetch invoices");
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || "Server error");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string }; message?: string } }).response?.data?.message
+          : err instanceof Error ? err.message : "Server error";
+      setError(String(msg));
     } finally {
       setLoading(false);
     }
@@ -54,10 +77,8 @@ export default function InvoicePage() {
     fetchInvoices();
   }, []);
 
-  // Delete invoice
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this invoice?")) return;
-
     try {
       setLoading(true);
       const res = await api.delete(`/invoice/${id}`);
@@ -66,9 +87,12 @@ export default function InvoicePage() {
       } else {
         setError(res.data.message || "Failed to delete invoice");
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || "Server error");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : err instanceof Error ? err.message : "Server error";
+      setError(String(msg));
     } finally {
       setLoading(false);
     }
@@ -77,9 +101,18 @@ export default function InvoicePage() {
   return (
     <ProtectedRoute allowedRoles={["admin", "manager", "saler"]}>
       <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-6 text-center">
-          All Invoices
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-semibold text-center sm:text-left">
+            All Invoices
+          </h1>
+          <button
+            type="button"
+            onClick={() => router.push("/invoice/add")}
+            className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 font-medium shrink-0"
+          >
+            Add Invoice
+          </button>
+        </div>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
@@ -104,10 +137,13 @@ export default function InvoicePage() {
                       <span className="font-semibold">Status:</span>{" "}
                       {invoice.status}
                     </p>
+                    <p className="text-sm text-gray-600">
+                      Created by: {createdByLabel(invoice)}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p>
-                      <span className="font-semibold">Total:</span> $
+                      <span className="font-semibold">Total:</span> Rs.{" "}
                       {invoice.total_amount}
                     </p>
                     <p className="text-sm text-gray-500">
@@ -121,8 +157,8 @@ export default function InvoicePage() {
                   <ul className="list-disc list-inside">
                     {invoice.items.map((item, idx) => (
                       <li key={idx}>
-                        {item.description} - Qty: {item.quantity} | Unit: $
-                        {item.unit_price} | Total: ${item.total_price}
+                        {item.description} - Qty: {item.quantity} | Unit: Rs.{" "}
+                        {item.unit_price} | Total: Rs. {item.total_price}
                       </li>
                     ))}
                   </ul>

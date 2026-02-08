@@ -31,12 +31,20 @@ export default function SalesPage() {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const res = await api.get("http://localhost:5000/api/v1/sales/get");
+        const res = await api.get("/sales/get");
         if (res.data.success) {
           setSales(res.data.data);
         }
-      } catch (err: any) {
-        console.error("Error fetching sales:", err.message);
+      } catch (err: unknown) {
+        // Only log unexpected errors; 404 is handled by showing empty list
+        if (err && typeof err === "object" && "response" in err) {
+          const status = (err as { response?: { status?: number } }).response?.status;
+          if (status !== 404) {
+            console.error("Error fetching sales:", err);
+          }
+        } else {
+          console.error("Error fetching sales:", err);
+        }
       }
     };
 
