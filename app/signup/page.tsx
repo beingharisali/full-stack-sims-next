@@ -121,7 +121,7 @@ export default function Page() {
               <option value="">Select Role</option>
               <option value="manager">Manager</option>
               <option value="admin">Admin</option>
-              <option value="saler">Saler</option>
+              <option value="saler">Seller</option>
             </select>
           </div>
 
