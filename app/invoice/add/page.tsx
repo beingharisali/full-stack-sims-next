@@ -46,8 +46,11 @@ export default function SalerInvoiceAdd() {
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error ? err.message : "Server error";
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : err instanceof Error
+            ? err.message
+            : "Server error";
       setError(String(msg));
     }
   };
@@ -110,7 +113,8 @@ export default function SalerInvoiceAdd() {
       setError("");
 
       let createdBy: string | null = null;
-      const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+      const userStr =
+        typeof window !== "undefined" ? localStorage.getItem("user") : null;
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
@@ -126,12 +130,16 @@ export default function SalerInvoiceAdd() {
       const invoicePayload = {
         customer_name: customerName,
         customer_email: customerEmail,
-        items: items.map(({ productId, description, quantity, unit_price, total_price }) => ({
-          description,
-          quantity,
-          unit_price,
-          total_price,
-        })),
+        items: items.map(
+          ({ productId, description, quantity, unit_price, total_price }) => ({
+            product: productId, // ✅ backend expects 'product'
+            description,
+            quantity,
+            unit_price,
+            total_price,
+          }),
+        ),
+
         subtotal,
         tax_amount: 0,
         discount_amount: 0,
@@ -145,8 +153,11 @@ export default function SalerInvoiceAdd() {
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error ? err.message : "Something went wrong";
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : err instanceof Error
+            ? err.message
+            : "Something went wrong";
       setError(String(msg));
     } finally {
       setLoading(false);
