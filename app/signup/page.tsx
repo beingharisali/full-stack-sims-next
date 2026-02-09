@@ -38,11 +38,11 @@ export default function Page() {
       toast.success("User registered successfully!");
 
       if (form.role === "admin") {
-        router.push("/dashboard");
+        router.push("/admin");
       } else if (form.role === "manager") {
-        router.push("/manager");
+        router.push("/inventory");
       } else if (form.role === "saler") {
-        router.push("/saler");
+        router.push("/invoice/add");
       } else {
         router.push("/");
       }

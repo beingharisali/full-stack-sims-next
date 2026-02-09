@@ -102,14 +102,17 @@ export default function ProductsPage() {
         description,
       };
 
-      const res = await api.put(
-        `/products/update/${editing._id}`,
-        payload,
-      );
+      const res = await api.put(`/products/update/${editing._id}`, payload);
 
       setProducts((prev) =>
         prev.map((p) =>
-          p._id === editing._id ? { ...p, ...payload, supplier: res.data?.data?.supplier ?? p.supplier } : p,
+          p._id === editing._id
+            ? {
+                ...p,
+                ...payload,
+                supplier: res.data?.data?.supplier ?? p.supplier,
+              }
+            : p,
         ),
       );
       setEditing(null);

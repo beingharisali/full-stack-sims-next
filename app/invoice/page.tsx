@@ -35,13 +35,17 @@ interface Invoice {
   createdByName?: string | null;
 }
 
-function createdByLabel(invoice: Pick<Invoice, "createdByName" | "createdBy">): string {
-  if (invoice.createdByName && invoice.createdByName.trim()) return invoice.createdByName;
+function createdByLabel(
+  invoice: Pick<Invoice, "createdByName" | "createdBy">,
+): string {
+  if (invoice.createdByName && invoice.createdByName.trim())
+    return invoice.createdByName;
   const createdBy = invoice.createdBy;
   if (!createdBy) return "—";
   if (typeof createdBy === "string") return createdBy;
   const c = createdBy as CreatedBy;
-  if (c.firstName || c.lastName) return [c.firstName, c.lastName].filter(Boolean).join(" ");
+  if (c.firstName || c.lastName)
+    return [c.firstName, c.lastName].filter(Boolean).join(" ");
   if (c.email) return c.email;
   return c._id ? String(c._id) : "—";
 }
@@ -65,8 +69,14 @@ export default function InvoicePage() {
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string }; message?: string } }).response?.data?.message
-          : err instanceof Error ? err.message : "Server error";
+          ? (
+              err as {
+                response?: { data?: { message?: string }; message?: string };
+              }
+            ).response?.data?.message
+          : err instanceof Error
+            ? err.message
+            : "Server error";
       setError(String(msg));
     } finally {
       setLoading(false);
@@ -90,8 +100,11 @@ export default function InvoicePage() {
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : err instanceof Error ? err.message : "Server error";
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : err instanceof Error
+            ? err.message
+            : "Server error";
       setError(String(msg));
     } finally {
       setLoading(false);
