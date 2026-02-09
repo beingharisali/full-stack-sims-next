@@ -37,18 +37,19 @@ export default function LoginPage() {
       console.log(res.data);
       toast.success("Logged in Successfully!");
 
+      const roleFromServer = res.data?.user?.role || form.role;
       localStorage.setItem(
         "user",
         JSON.stringify({
           email: form.email,
-          role: form.role,
+          role: roleFromServer,
           token: res.data.token,
         }),
       );
 
-      if (form.role === "admin") router.push("/dashboard");
-      else if (form.role === "manager") router.push("/inventory");
-      else if (form.role === "saler") router.push("/invoice/add");
+      if (roleFromServer === "admin") router.push("/dashboard");
+      else if (roleFromServer === "manager") router.push("/inventory");
+      else if (roleFromServer === "saler") router.push("/invoice/add");
       else router.push("/");
     } catch (error: any) {
       error.response?.data?.msg || "Login failed";
@@ -98,7 +99,7 @@ export default function LoginPage() {
               <option value="">Select Role</option>
               <option value="manager">Manager</option>
               <option value="admin">Admin</option>
-              <option value="saler">Saler</option>
+              <option value="saler">Seller</option>
             </select>
           </div>
 
