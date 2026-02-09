@@ -21,7 +21,7 @@ export default function SalerPage() {
   useEffect(() => {
     const fetchSalers = async () => {
       try {
-        const res = await api.get("/saler"); // your backend route
+        const res = await api.get("/saler");
         if (res.data.success) {
           setSalers(res.data.data);
         } else {

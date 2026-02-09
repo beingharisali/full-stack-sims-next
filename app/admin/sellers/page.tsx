@@ -82,7 +82,7 @@ export default function AdminSellersPage() {
         await api.put(`/users/${editing._id}`, payload);
         setSellers((prev) =>
           prev.map((s) =>
-            s._id === editing._id ? { ...s, ...payload } as SellerUser : s,
+            s._id === editing._id ? ({ ...s, ...payload } as SellerUser) : s,
           ),
         );
       } else {

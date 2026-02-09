@@ -82,7 +82,9 @@ export default function Dashboard() {
 
       const [statsRes, salesRes, monthlyRes] = await Promise.all([
         api.get("/dashboard"),
-        api.get("/invoice/total/sales").catch(() => ({ data: { totalSales: 0 } })),
+        api
+          .get("/invoice/total/sales")
+          .catch(() => ({ data: { totalSales: 0 } })),
         api.get("/invoice/monthly/sales").catch(() => ({ data: { data: [] } })),
       ]);
 
@@ -269,7 +271,7 @@ export default function Dashboard() {
                     border: "1px solid #e5e7eb",
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
-                  formatter={(value: number) => [value, "Count"]}
+                  formatter={(value?: number) => `${value ?? 0} Count`}
                   labelStyle={{ color: "#374151" }}
                 />
                 <Legend />
@@ -309,10 +311,9 @@ export default function Dashboard() {
                     border: "1px solid #e5e7eb",
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
-                  formatter={(value: number) => [
-                    `Rs. ${Number(value).toLocaleString()}`,
-                    "Revenue",
-                  ]}
+                  formatter={(value?: number) =>
+                    `Rs. ${value?.toLocaleString() ?? 0} Revenue`
+                  }
                   labelStyle={{ color: "#374151" }}
                 />
                 <Legend />
