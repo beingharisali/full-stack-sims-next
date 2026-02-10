@@ -15,14 +15,14 @@ export default function Sidebar() {
   }, []);
 
   const pageAccess: Record<string, string[]> = {
-    products: ["admin", "manager"],
+    // products: ["admin", "manager"],
     inventory: ["admin", "manager"],
     sales: ["admin", "manager", "saler"],
     invoice: ["admin", "manager", "saler"],
   };
 
   const items = [
-    { name: "Products", href: "/products" },
+    // { name: "Products", href: "/products" },
     { name: "Inventory", href: "/inventory" },
     { name: "Sales", href: "/sales" },
     { name: "Invoice", href: "/invoice" },

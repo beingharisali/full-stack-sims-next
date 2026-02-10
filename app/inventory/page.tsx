@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
@@ -8,7 +8,11 @@ import api from "../utils/api";
 type InventoryItem = {
   _id: string;
   product: string;
-  quantity: number; // Stock
+  quantity: number;
+  category: string;
+  description: string;
+  price: number;
+  supplier: string;
   location: string;
 };
 
@@ -26,7 +30,11 @@ export default function InventoryPage() {
             _id: item._id,
             product: item.productName,
             quantity: item.quantity,
-            location: item.location || "Warehouse",
+            category: item.category,
+            description: item.description,
+            price: item.price,
+            supplier: item.supplier,
+            location: item.location,
           }));
           setItems(backendItems);
         }
@@ -54,6 +62,8 @@ export default function InventoryPage() {
       await api.put(`/inventory/update/${editItem._id}`, {
         productName: editItem.product,
         quantity: editItem.quantity,
+        supplier: editItem.supplier,
+        price: editItem.price,
         location: editItem.location,
       });
 
@@ -87,7 +97,7 @@ export default function InventoryPage() {
             onClick={() => router.push("/inventory/add")}
             className="bg-teal-600 text-white px-4 py-3 rounded hover:bg-teal-700"
           >
-            Add Inventory
+            Add Products
           </button>
         </div>
 
@@ -97,7 +107,11 @@ export default function InventoryPage() {
               <tr>
                 <th className="px-4 py-2 text-left">Product</th>
                 <th className="px-4 py-2 text-left">Stock</th>
+                <th className="px-4 py-2 text-left">Category</th>
+                <th className="px-4 py-2 text-left">Description</th>
                 <th className="px-4 py-2 text-left">Location</th>
+                <th className="px-4 py-2 text-left">Price</th>
+                <th className="px-4 py-2 text-left">Supplier</th>
                 <th className="px-4 py-2 text-center">Actions</th>
               </tr>
             </thead>
@@ -106,7 +120,11 @@ export default function InventoryPage() {
                 <tr key={item._id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-2">{item.product}</td>
                   <td className="px-4 py-2">{item.quantity}</td>
+                  <td className="px-4 py-2">{item.category}</td>
+                  <td className="px-4 py-2">{item.description}</td>
                   <td className="px-4 py-2">{item.location}</td>
+                  <td className="px-4 py-2">{item.price}</td>
+                  <td className="px-4 py-2">{item.supplier}</td>
                   <td className="px-4 py-2 space-x-2 text-center">
                     <button
                       onClick={() => setEditItem(item)}

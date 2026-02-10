@@ -31,6 +31,7 @@ export default function AddInventoryPage() {
         price: Number(price),
         supplier,
         quantity: Number(quantity),
+        location,
       };
       console.log("Sending payload:", payload);
 
