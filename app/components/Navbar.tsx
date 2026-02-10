@@ -22,7 +22,7 @@ export default function Navbar() {
   };
 
   const pageAccess: Record<string, string[]> = {
-    products: ["admin", "manager"],
+    // products: ["admin", "manager"],
     inventory: ["admin", "manager"],
     sales: ["admin", "manager", "saler"],
     invoice: ["admin", "manager", "saler"],
@@ -31,7 +31,7 @@ export default function Navbar() {
   };
 
   const links = [
-    { name: "Products", href: "/products" },
+    // { name: "Products", href: "/products" },
     { name: "Inventory", href: "/inventory" },
     { name: "Sales", href: "/sales" },
     { name: "Invoice", href: "/invoice" },

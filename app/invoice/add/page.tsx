@@ -6,10 +6,10 @@ import api from "../../utils/api";
 import { useRouter } from "next/navigation";
 
 interface Product {
-  category: string | number | readonly string[] | undefined;
   _id: string;
-  name: string;
-  stock: number;
+  productName: string;
+  category: string;
+  quantity: number;
   price: number;
 }
 
@@ -27,6 +27,9 @@ export default function SalerInvoiceAdd() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<InvoiceItem[]>([]);
+  const categories = Array.from(
+    new Set(products.map((p) => p.category).filter(Boolean)),
+  );
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,7 @@ export default function SalerInvoiceAdd() {
   // Fetch products from backend
   const fetchProducts = async () => {
     try {
-      const res = await api.get("/products/get");
+      const res = await api.get("/inventory/get");
       if (res.data.success) {
         setProducts(res.data.data);
       } else {
@@ -84,7 +87,7 @@ export default function SalerInvoiceAdd() {
     if (field === "productId") {
       const prod = products.find((p) => p._id === value);
       if (prod) {
-        item.description = prod.name;
+        item.description = prod.productName;
         item.unit_price = prod.price;
         item.total_price = prod.price * item.quantity;
       }
@@ -105,6 +108,10 @@ export default function SalerInvoiceAdd() {
   const handleCreateInvoice = async () => {
     if (!customerName || !customerEmail || items.length === 0) {
       alert("Please fill customer info and add at least one item");
+      return;
+    }
+    if (items.some((i) => !i.productId)) {
+      alert("Please select product for all items");
       return;
     }
 
@@ -132,14 +139,13 @@ export default function SalerInvoiceAdd() {
         customer_email: customerEmail,
         items: items.map(
           ({ productId, description, quantity, unit_price, total_price }) => ({
-            product: productId, // ✅ backend expects 'product'
+            product: productId, // <-- yahan "product" hona chahiye, "productId" nahi
             description,
             quantity,
             unit_price,
             total_price,
           }),
         ),
-
         subtotal,
         tax_amount: 0,
         discount_amount: 0,
@@ -210,24 +216,14 @@ export default function SalerInvoiceAdd() {
                 Product Category
               </label>
               <select
-                className="border border-gray-300 p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
-                value={item.category}
+                className="border border-gray-300 p-3 w-full rounded"
+                value={item.category || ""}
                 onChange={(e) => updateItem(idx, "category", e.target.value)}
               >
                 <option value="">Select Category</option>
-                {[
-                  "mobile",
-                  "laptop",
-                  "headphones",
-                  "tablet",
-                  "televison",
-                  "camera",
-                  "smartwatch",
-                  "accessories",
-                  "home-appliances",
-                ].map((cat) => (
+                {categories.map((cat) => (
                   <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    {cat}
                   </option>
                 ))}
               </select>
@@ -235,16 +231,18 @@ export default function SalerInvoiceAdd() {
 
             {/* Product Select */}
             <select
-              className="border border-gray-300 p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
-              value={item.productId || ""}
+              className="border border-gray-300 p-3 w-full rounded"
+              value={item.productId}
               onChange={(e) => updateItem(idx, "productId", e.target.value)}
             >
               <option value="">Select Product</option>
-              {products.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.name} (${p.price})
-                </option>
-              ))}
+              {products
+                .filter((p) => !item.category || p.category === item.category)
+                .map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.productName} (Rs. {p.price})
+                  </option>
+                ))}
             </select>
 
             {/* Description (editable) */}
