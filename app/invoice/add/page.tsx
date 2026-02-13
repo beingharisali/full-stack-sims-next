@@ -139,7 +139,7 @@ export default function SalerInvoiceAdd() {
         customer_email: customerEmail,
         items: items.map(
           ({ productId, description, quantity, unit_price, total_price }) => ({
-            product: productId, // <-- yahan "product" hona chahiye, "productId" nahi
+            product: productId,
             description,
             quantity,
             unit_price,
