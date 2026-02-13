@@ -36,7 +36,7 @@ export default function Navbar() {
     { name: "Sales", href: "/sales" },
     { name: "Invoice", href: "/invoice" },
     { name: "Suppliers", href: "/admin/suppliers" },
-    { name: "Sellers", href: "/admin/sellers" },
+    // { name: "Sellers", href: "/admin/sellers" },
   ];
 
   return (
