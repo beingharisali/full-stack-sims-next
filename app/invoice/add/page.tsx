@@ -22,7 +22,7 @@ interface InvoiceItem {
   total_price: number;
 }
 
-export default function InvoiceAdd() {
+export default function SalerInvoiceAdd() {
   const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,7 +30,6 @@ export default function InvoiceAdd() {
   const categories = Array.from(
     new Set(products.map((p) => p.category).filter(Boolean)),
   );
-
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,26 +38,27 @@ export default function InvoiceAdd() {
   const subtotal = items.reduce((sum, i) => sum + i.total_price, 0);
 
   // Fetch products from backend
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await api.get("/inventory/get");
-        if (res.data.success) {
-          setProducts(res.data.data);
-        } else {
-          setError(res.data.message || "Failed to fetch products");
-        }
-      } catch (err: unknown) {
-        const msg =
-          err && typeof err === "object" && "response" in err
-            ? (err as { response?: { data?: { message?: string } } }).response
-                ?.data?.message
-            : err instanceof Error
-              ? err.message
-              : "Server error";
-        setError(String(msg));
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get("/inventory/get");
+      if (res.data.success) {
+        setProducts(res.data.data);
+      } else {
+        setError(res.data.message || "Failed to fetch products");
       }
-    };
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : err instanceof Error
+            ? err.message
+            : "Server error";
+      setError(String(msg));
+    }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, []);
 
@@ -104,7 +104,7 @@ export default function InvoiceAdd() {
     updated[index] = item;
     setItems(updated);
   };
-
+  // Create invoice (backend auto-generates sales from invoice items)
   const handleCreateInvoice = async () => {
     if (!customerName || !customerEmail || items.length === 0) {
       alert("Please fill customer info and add at least one item");
@@ -129,7 +129,9 @@ export default function InvoiceAdd() {
             const payload = JSON.parse(atob(user.token.split(".")[1]));
             createdBy = payload.userId || payload._id || null;
           }
-        } catch {}
+        } catch {
+          // ignore
+        }
       }
 
       const invoicePayload = {
@@ -205,8 +207,10 @@ export default function InvoiceAdd() {
           </div>
         </div>
 
+        {/* Invoice Items */}
         {items.map((item, idx) => (
           <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+            {/* Category */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Product Category
@@ -225,6 +229,7 @@ export default function InvoiceAdd() {
               </select>
             </div>
 
+            {/* Product Select */}
             <select
               className="border border-gray-300 p-3 w-full rounded"
               value={item.productId}
@@ -240,6 +245,7 @@ export default function InvoiceAdd() {
                 ))}
             </select>
 
+            {/* Description (editable) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description
@@ -253,6 +259,7 @@ export default function InvoiceAdd() {
               />
             </div>
 
+            {/* Quantity */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Quantity
@@ -268,6 +275,7 @@ export default function InvoiceAdd() {
               />
             </div>
 
+            {/* Unit Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Unit Price

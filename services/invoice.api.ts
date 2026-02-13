@@ -20,11 +20,7 @@ export async function createInvoice(
   grandTotal: number,
   status: "pending" | "paid" | "cancelled",
   invoiceDate: Date,
-<<<<<<< HEAD
   dueDate: Date,
-=======
-  dueDate: Date
->>>>>>> 216487e7feb4ac443c647a48ba5830963bd0a7e8
 ): Promise<{ invoice: Invoice }> {
   const res = await http.post("/", {
     invoiceNumber,
@@ -46,11 +42,7 @@ export async function getInvoices(): Promise<{ invoices: Invoice[] }> {
 }
 
 export async function getSingleInvoice(
-<<<<<<< HEAD
   id: string,
-=======
-  id: string
->>>>>>> 216487e7feb4ac443c647a48ba5830963bd0a7e8
 ): Promise<{ invoice: Invoice }> {
   const res = await http.get(`/${id}`);
   return res.data;
@@ -76,11 +68,7 @@ export async function updateInvoice(
   grandTotal: number,
   status: "pending" | "paid" | "cancelled",
   invoiceDate: Date,
-<<<<<<< HEAD
   dueDate: Date,
-=======
-  dueDate: Date
->>>>>>> 216487e7feb4ac443c647a48ba5830963bd0a7e8
 ): Promise<{ invoice: Invoice }> {
   const res = await http.put(`/${id}`, {
     invoiceNumber,
@@ -96,13 +84,7 @@ export async function updateInvoice(
   return res.data;
 }
 
-<<<<<<< HEAD
 export async function deleteInvoice(id: string): Promise<{ invoice: Invoice }> {
-=======
-export async function deleteInvoice(
-  id: string
-): Promise<{ invoice: Invoice }> {
->>>>>>> 216487e7feb4ac443c647a48ba5830963bd0a7e8
   const res = await http.delete(`/${id}`);
   return res.data;
 }
