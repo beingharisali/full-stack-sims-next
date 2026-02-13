@@ -38,7 +38,7 @@ export default function Page() {
       toast.success("User registered successfully!");
 
       if (form.role === "admin") {
-        router.push("/admin");
+        router.push("/dashboard");
       } else if (form.role === "manager") {
         router.push("/inventory");
       } else if (form.role === "saler") {

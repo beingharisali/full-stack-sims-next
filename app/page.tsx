@@ -47,7 +47,7 @@ export default function LoginPage() {
         }),
       );
       console.log("Role from server:", roleFromServer);
-      if (roleFromServer === "admin") router.push("/admin");
+      if (roleFromServer === "admin") router.push("/dashboard");
       else if (roleFromServer === "manager") router.push("/inventory");
       else if (roleFromServer === "saler") router.push("/invoice/add");
       else router.push("/");
