@@ -104,7 +104,7 @@ export default function AddInventoryPage() {
 
           <input
             className="border p-2 w-full rounded"
-            placeholder="Location (Optional)"
+            placeholder="Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
@@ -119,7 +119,7 @@ export default function AddInventoryPage() {
 
           <input
             className="border p-2 w-full rounded"
-            placeholder="Category (Optional)"
+            placeholder="Category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           />
