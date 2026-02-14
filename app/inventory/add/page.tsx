@@ -7,6 +7,7 @@ import api from "../../utils/api";
 type Supplier = {
   _id: string;
   name: string;
+  category: string;
 };
 
 export default function AddInventoryPage() {
@@ -24,13 +25,26 @@ export default function AddInventoryPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
         const res = await api.get("/supplier/get");
+
         if (res.data.success) {
-          setSuppliers(res.data.data || []);
+          const supplierData: Supplier[] = res.data.data || [];
+
+          setSuppliers(supplierData);
+          const uniqueCategories = Array.from(
+            new Set(
+              supplierData
+                .map((s) => s.category)
+                .filter((cat) => typeof cat === "string" && cat.trim() !== ""),
+            ),
+          );
+
+          setCategories(uniqueCategories);
         }
       } catch (err) {
         console.error("Failed to fetch suppliers");
@@ -117,12 +131,19 @@ export default function AddInventoryPage() {
             required
           />
 
-          <input
+          <select
             className="border p-2 w-full rounded"
-            placeholder="Category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-          />
+            required
+          >
+            <option value="">Select Category</option>
+            {categories.map((cat, index) => (
+              <option key={index} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
 
           <input
             type="number"
