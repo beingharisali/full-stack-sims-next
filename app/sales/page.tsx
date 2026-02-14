@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
-import api from "../utils/api"; // make sure this axios instance points to your backend
+import api from "../utils/api";
 
 type Sale = {
   _id: string;
@@ -20,14 +20,12 @@ export default function SalesPage() {
   const [quantity, setQuantity] = useState<number | "">("");
   const [total, setTotal] = useState<number | "">("");
 
-  // Get user role from localStorage
   const user =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "{}")
       : null;
   const role = user?.role;
 
-  // Fetch sales from backend
   useEffect(() => {
     const fetchSales = async () => {
       try {
@@ -36,7 +34,6 @@ export default function SalesPage() {
           setSales(res.data.data);
         }
       } catch (err: unknown) {
-        // Only log unexpected errors; 404 is handled by showing empty list
         if (err && typeof err === "object" && "response" in err) {
           const status = (err as { response?: { status?: number } }).response
             ?.status;
@@ -115,7 +112,6 @@ export default function SalesPage() {
           </div>
         </div>
 
-        {/* Sales Table */}
         <div className="bg-white shadow-md rounded-xl overflow-hidden">
           <table className="min-w-full border-collapse">
             <thead className="bg-gray-100">
@@ -173,8 +169,6 @@ export default function SalesPage() {
             </tbody>
           </table>
         </div>
-
-        {/* Edit Modal */}
         {editing && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
