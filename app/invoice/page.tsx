@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
+import html2pdf from "html2pdf.js";
 
 interface InvoiceItem {
   productId?: string;
@@ -111,6 +112,42 @@ export default function InvoicePage() {
     }
   };
 
+  const handleDownload = (invoice: Invoice) => {
+    const element = document.createElement("div");
+
+    element.innerHTML = `
+    <h2>Invoice</h2>
+    <p><strong>Customer:</strong> ${invoice.customer_name}</p>
+    <p><strong>Email:</strong> ${invoice.customer_email}</p>
+    <p><strong>Status:</strong> ${invoice.status}</p>
+    <p><strong>Total:</strong> Rs. ${invoice.total_amount}</p>
+    <hr/>
+    <h3>Items</h3>
+    <ul>
+      ${invoice.items
+        .map(
+          (item) =>
+            `<li>
+              ${item.description} - Qty: ${item.quantity} |
+              Unit: Rs. ${item.unit_price} |
+              Total: Rs. ${item.total_price}
+            </li>`,
+        )
+        .join("")}
+    </ul>
+  `;
+
+    html2pdf()
+      .from(element)
+      .set({
+        margin: 10,
+        filename: `Invoice-${invoice._id}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .save();
+  };
+
   return (
     <ProtectedRoute allowedRoles={["admin", "manager", "saler"]}>
       <div className="p-6 max-w-5xl mx-auto">
@@ -177,8 +214,14 @@ export default function InvoicePage() {
                   </ul>
                 </div>
 
-                {/* Delete button */}
-                <div className="mt-3 text-right">
+                <div className="mt-3 flex justify-end gap-3">
+                  <button
+                    onClick={() => handleDownload(invoice)}
+                    className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    Download
+                  </button>
+
                   <button
                     onClick={() => handleDelete(invoice._id)}
                     className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
