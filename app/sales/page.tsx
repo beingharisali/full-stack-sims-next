@@ -38,7 +38,8 @@ export default function SalesPage() {
       } catch (err: unknown) {
         // Only log unexpected errors; 404 is handled by showing empty list
         if (err && typeof err === "object" && "response" in err) {
-          const status = (err as { response?: { status?: number } }).response?.status;
+          const status = (err as { response?: { status?: number } }).response
+            ?.status;
           if (status !== 404) {
             console.error("Error fetching sales:", err);
           }
@@ -112,13 +113,6 @@ export default function SalesPage() {
               </p>
             </div>
           </div>
-
-          <button
-            onClick={() => router.push("/sales/add")}
-            className="bg-teal-600 text-white px-5 py-2 rounded hover:bg-teal-700 h-fit"
-          >
-            Add Sale
-          </button>
         </div>
 
         {/* Sales Table */}
