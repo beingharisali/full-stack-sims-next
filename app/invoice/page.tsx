@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
-import html2pdf from "html2pdf.js";
 
 interface InvoiceItem {
   productId?: string;
@@ -112,39 +111,65 @@ export default function InvoicePage() {
     }
   };
 
-  const handleDownload = (invoice: Invoice) => {
+  const handleDownload = async (invoice: Invoice) => {
+    const html2pdf = (await import("html2pdf.js")).default;
+
     const element = document.createElement("div");
 
     element.innerHTML = `
-    <h2>Invoice</h2>
-    <p><strong>Customer:</strong> ${invoice.customer_name}</p>
-    <p><strong>Email:</strong> ${invoice.customer_email}</p>
-    <p><strong>Status:</strong> ${invoice.status}</p>
-    <p><strong>Total:</strong> Rs. ${invoice.total_amount}</p>
-    <hr/>
-    <h3>Items</h3>
-    <ul>
-      ${invoice.items
-        .map(
-          (item) =>
-            `<li>
-              ${item.description} - Qty: ${item.quantity} |
-              Unit: Rs. ${item.unit_price} |
-              Total: Rs. ${item.total_price}
-            </li>`,
-        )
-        .join("")}
-    </ul>
+    <div style="padding:20px; font-family: Arial; width: 800px;">
+      
+      <h2 style="text-align:center;">INVOICE</h2>
+      <hr/>
+
+      <p><strong>Customer:</strong> ${invoice.customer_name}</p>
+      <p><strong>Email:</strong> ${invoice.customer_email}</p>
+      <p><strong>Status:</strong> ${invoice.status}</p>
+
+      <br/>
+
+      <table style="width:100%; border-collapse: collapse;" border="1">
+        <thead>
+          <tr>
+            <th style="padding:8px;">Description</th>
+            <th style="padding:8px;">Qty</th>
+            <th style="padding:8px;">Unit Price</th>
+            <th style="padding:8px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invoice.items
+            .map(
+              (item) => `
+              <tr>
+                <td style="padding:8px;">${item.description}</td>
+                <td style="padding:8px; text-align:center;">${item.quantity}</td>
+                <td style="padding:8px; text-align:right;">Rs. ${item.unit_price}</td>
+                <td style="padding:8px; text-align:right;">Rs. ${item.total_price}</td>
+              </tr>
+            `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+
+      <br/>
+
+      <div style="text-align:right;">
+        <h3>Total: Rs. ${invoice.total_amount}</h3>
+      </div>
+
+    </div>
   `;
 
     html2pdf()
-      .from(element)
       .set({
         margin: 10,
         filename: `Invoice-${invoice._id}.pdf`,
         html2canvas: { scale: 2 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       })
+      .from(element)
       .save();
   };
 
