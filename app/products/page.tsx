@@ -1,302 +1,154 @@
-// "use client";
+"use client";
 
-// import { useState, useEffect } from "react";
-// import { useRouter } from "next/navigation";
-// import ProtectedRoute from "../components/protectedroutes";
-// import api from "../utils/api";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { FaPlus, FaBox, FaEdit, FaTrash, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import ProtectedRoute from "../components/protectedroutes";
+import api from "../utils/api";
 
-// type Supplier = { _id: string; name: string; supplierGroup: string };
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  stock: number;
+  lowStockThreshold: number;
+}
 
-// type Product = {
-//   _id: string;
-//   name: string;
-//   price: number;
-//   stock: number;
-//   supplier?: string | { _id: string; name?: string; supplierGroup?: string };
-//   category: string;
-//   description: string;
-// };
+export default function ProductsPage() {
+  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-// function supplierLabel(p: Product): string {
-//   const s = p.supplier;
-//   if (!s) return "—";
-//   if (typeof s === "string") return s;
-//   return s.name || s.supplierGroup || s._id || "—";
-// }
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/products/get");
+      if (res.data.success) {
+        setProducts(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Fetch Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-// export default function ProductsPage() {
-//   const router = useRouter();
-//   const [products, setProducts] = useState<Product[]>([]);
-//   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-//   const [editing, setEditing] = useState<Product | null>(null);
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-//   const [name, setName] = useState("");
-//   const [price, setPrice] = useState<number | "">("");
-//   const [stock, setStock] = useState<number | "">("");
-//   const [supplier, setSupplier] = useState("");
-//   const [category, setCategory] = useState("");
-//   const [description, setDescription] = useState("");
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await api.delete(`/products/delete/${id}`);
+      setProducts(products.filter((p) => p._id !== id));
+    } catch (err) {
+      alert("Failed to delete product");
+    }
+  };
 
-//   const fetchProducts = async () => {
-//     try {
-//       const res = await api.get("/products/get");
-//       if (res.data.success) setProducts(res.data.data || []);
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   };
+  return (
+    <ProtectedRoute allowedRoles={["admin", "manager"]}>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* HEADER SECTION (Uniform Design) */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FaBox className="text-teal-600" /> Product Management
+              </h1>
+              <p className="text-gray-500 text-sm font-medium">Manage your items and pricing</p>
+            </div>
+            
+            <button 
+              onClick={() => router.push("/products/add")}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-lg transition-all active:scale-95"
+            >
+              <FaPlus /> Add Product
+            </button>
+          </div>
 
-//   const fetchSuppliers = async () => {
-//     try {
-//       const res = await api.get("/supplier/get");
-//       if (res.data.success) setSuppliers(res.data.data || []);
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   };
+          {/* PRODUCTS LIST TABLE */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Product Info</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Price (Rs)</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loading ? (
+                    <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-medium italic">Syncing product data...</td></tr>
+                  ) : products.length === 0 ? (
+                    <tr><td colSpan={5} className="p-10 text-center text-gray-400">No products registered yet.</td></tr>
+                  ) : (
+                    products.map((p) => (
+                      <tr key={p._id} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="p-4">
+                          <p className="font-bold text-gray-800">{p.name}</p>
+                          <p className="text-xs text-gray-400 truncate max-w-[200px]">{p.description}</p>
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tighter">
+                            {p.category}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm font-bold text-teal-600">
+                          {p.price.toLocaleString()}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col">
+                            <span className={`text-sm font-bold ${p.stock <= p.lowStockThreshold ? 'text-red-500' : 'text-gray-700'}`}>
+                              {p.stock} Units
+                            </span>
+                            {p.stock <= p.lowStockThreshold ? (
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-red-400 uppercase">
+                                <FaExclamationTriangle className="text-[8px]" /> Low Stock
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-green-500 uppercase">
+                                <FaCheckCircle className="text-[8px]" /> In Stock
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        {/* Icons Hamesha Nazar Aayenge */}
+                        <td className="p-4">
+                          <div className="flex justify-center gap-4">
+                            <button 
+                              onClick={() => router.push(`/products/edit/${p._id}`)} 
+                              className="text-teal-600 hover:text-teal-800 transition-colors"
+                              title="Edit"
+                            >
+                              <FaEdit size={18} />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(p._id)} 
+                              className="text-red-500 hover:text-red-700 transition-colors"
+                              title="Delete"
+                            >
+                              <FaTrash size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-//   useEffect(() => {
-//     fetchProducts();
-//     fetchSuppliers();
-//   }, []);
-
-//   const handleDelete = async (productId: string) => {
-//     try {
-//       await api.delete(`/products/delete/${productId}`);
-//       try {
-//         await api.delete(`/inventory/delete-by-product/${productId}`);
-//       } catch {
-//         // ignore if no such route or no inventory
-//       }
-//       setProducts((prev) => prev.filter((p) => p._id !== productId));
-//     } catch (err: unknown) {
-//       console.error("Delete failed:", err);
-//     }
-//   };
-
-//   const handleEdit = (product: Product) => {
-//     setEditing(product);
-//     setName(product.name);
-//     setPrice(product.price);
-//     setStock(product.stock);
-//     const sid =
-//       typeof product.supplier === "object" && product.supplier
-//         ? product.supplier._id
-//         : (product.supplier as string) || "";
-//     setSupplier(sid);
-//     setCategory(product.category);
-//     setDescription(product.description);
-//   };
-
-//   const handleUpdate = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (!editing) return;
-
-//     try {
-//       const payload = {
-//         name,
-//         price: Number(price),
-//         stock: Number(stock),
-//         supplier: supplier || undefined,
-//         category,
-//         description,
-//       };
-
-//       const res = await api.put(`/products/update/${editing._id}`, payload);
-
-//       setProducts((prev) =>
-//         prev.map((p) =>
-//           p._id === editing._id
-//             ? {
-//                 ...p,
-//                 ...payload,
-//                 supplier: res.data?.data?.supplier ?? p.supplier,
-//               }
-//             : p,
-//         ),
-//       );
-//       setEditing(null);
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   };
-
-//   return (
-//     <ProtectedRoute allowedRoles={["admin", "manager"]}>
-//       <div className="p-6">
-//         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//             <div className="bg-white p-4 shadow rounded">
-//               <h2 className="text-gray-500">Total Products</h2>
-//               <p className="text-2xl font-bold">{products.length}</p>
-//             </div>
-//             <div className="bg-white p-4 shadow rounded">
-//               <h2 className="text-gray-500">Total Stock</h2>
-//               <p className="text-2xl font-bold">
-//                 {products.reduce((a, b) => a + b.stock, 0)}
-//               </p>
-//             </div>
-//           </div>
-
-//           <button
-//             onClick={() => router.push("/products/add")}
-//             className="bg-teal-600 text-white px-5 py-2 rounded hover:bg-teal-700 h-fit"
-//           >
-//             Add Product
-//           </button>
-//         </div>
-
-//         <div className="bg-white shadow-md rounded-xl overflow-hidden">
-//           <table className="min-w-full border-collapse">
-//             <thead className="bg-gray-100">
-//               <tr>
-//                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-//                   Name
-//                 </th>
-//                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-//                   Price
-//                 </th>
-//                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-//                   Stock
-//                 </th>
-//                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-//                   Supplier
-//                 </th>
-//                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-//                   Category
-//                 </th>
-//                 <th className="p-3 text-left text-sm font-semibold text-gray-600">
-//                   Description
-//                 </th>
-//                 <th className="p-3 text-center text-sm font-semibold text-gray-600">
-//                   Actions
-//                 </th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {products.map((p) => (
-//                 <tr
-//                   key={p._id}
-//                   className="border-t bg-white hover:bg-blue-50 transition"
-//                 >
-//                   <td className="p-3 font-medium">{p.name}</td>
-//                   <td className="p-3">${p.price}</td>
-//                   <td className="p-3">{p.stock}</td>
-//                   <td className="p-3">{supplierLabel(p)}</td>
-//                   <td className="p-3">{p.category}</td>
-//                   <td className="p-3">{p.description}</td>
-//                   <td className="p-3 text-center space-x-2">
-//                     <button
-//                       onClick={() => handleEdit(p)}
-//                       className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700"
-//                     >
-//                       Edit
-//                     </button>
-//                     <button
-//                       onClick={() => handleDelete(p._id)}
-//                       className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
-//                     >
-//                       Delete
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))}
-//               {products.length === 0 && (
-//                 <tr>
-//                   <td colSpan={7} className="p-4 text-center text-gray-500">
-//                     No products available
-//                   </td>
-//                 </tr>
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-
-//         {editing && (
-//           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-//             <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
-//               <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-//                 Edit Product
-//               </h2>
-
-//               <form onSubmit={handleUpdate} className="space-y-3">
-//                 <input
-//                   type="text"
-//                   placeholder="Product Name"
-//                   value={name}
-//                   onChange={(e) => setName(e.target.value)}
-//                   className="border p-2 w-full rounded"
-//                   required
-//                 />
-//                 <input
-//                   type="number"
-//                   placeholder="Price"
-//                   value={price}
-//                   onChange={(e) =>
-//                     setPrice(
-//                       e.target.value === "" ? "" : Number(e.target.value),
-//                     )
-//                   }
-//                   className="border p-2 w-full rounded"
-//                   required
-//                 />
-//                 <input
-//                   type="number"
-//                   placeholder="Stock"
-//                   value={stock}
-//                   onChange={(e) =>
-//                     setStock(
-//                       e.target.value === "" ? "" : Number(e.target.value),
-//                     )
-//                   }
-//                   className="border p-2 w-full rounded"
-//                   required
-//                 />
-//                 <select
-//                   value={supplier}
-//                   onChange={(e) => setSupplier(e.target.value)}
-//                   className="border p-2 w-full rounded"
-//                 >
-//                   <option value="">Select supplier (optional)</option>
-//                   {suppliers.map((s) => (
-//                     <option key={s._id} value={s._id}>
-//                       {s.name} ({s.supplierGroup})
-//                     </option>
-//                   ))}
-//                 </select>
-//                 <input
-//                   type="text"
-//                   placeholder="Category"
-//                   value={category}
-//                   onChange={(e) => setCategory(e.target.value)}
-//                   className="border p-2 w-full rounded"
-//                   required
-//                 />
-//                 <textarea
-//                   placeholder="Description"
-//                   value={description}
-//                   onChange={(e) => setDescription(e.target.value)}
-//                   className="border p-2 w-full rounded"
-//                   required
-//                 />
-
-//                 <div className="flex justify-end gap-2 pt-3">
-//                   <button
-//                     type="button"
-//                     onClick={() => setEditing(null)}
-//                     className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-//                   >
-//                     Cancel
-//                   </button>
-//                   <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-//                     Update
-//                   </button>
-//                 </div>
-//               </form>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </ProtectedRoute>
-//   );
-// }
+        </div>
+      </div>
+    </ProtectedRoute>
+  );
+}

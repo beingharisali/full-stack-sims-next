@@ -1,226 +1,194 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { FaPlus, FaShoppingCart, FaHistory, FaMoneyBillWave, FaTrash, FaEdit } from "react-icons/fa";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
 
-type Sale = {
+interface Sale {
   _id: string;
   productName: string;
   quantity: number;
   total: number;
-};
+  createdAt: string;
+}
 
 export default function SalesPage() {
-  const router = useRouter();
   const [sales, setSales] = useState<Sale[]>([]);
-  const [editing, setEditing] = useState<Sale | null>(null);
-  const [product, setProduct] = useState("");
-  const [quantity, setQuantity] = useState<number | "">("");
-  const [total, setTotal] = useState<number | "">("");
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    productName: "",
+    quantity: 1,
+    unitPrice: 0, // Sirf calculation ke liye
+    total: 0,
+  });
 
-  const user =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "{}")
-      : null;
-  const role = user?.role;
-
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const res = await api.get("/sales/get");
-        if (res.data.success) {
-          setSales(res.data.data);
-        }
-      } catch (err: unknown) {
-        if (err && typeof err === "object" && "response" in err) {
-          const status = (err as { response?: { status?: number } }).response
-            ?.status;
-          if (status !== 404) {
-            console.error("Error fetching sales:", err);
-          }
-        } else {
-          console.error("Error fetching sales:", err);
-        }
-      }
-    };
-
-    fetchSales();
-  }, []);
-
-  const handleDelete = async (id: string) => {
+  const fetchSales = async () => {
     try {
-      await api.delete(`/sales/delete/${id}`);
-      setSales((prev) => prev.filter((s) => s._id !== id));
-    } catch (err: any) {
-      console.error("Delete failed:", err.message);
+      setLoading(true);
+      const res = await api.get("/sales/get");
+      if (res.data.success) setSales(res.data.data || []);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (sale: Sale) => {
-    setEditing(sale);
-    setProduct(sale.productName);
-    setQuantity(sale.quantity);
-    setTotal(sale.total);
-  };
+  useEffect(() => { fetchSales(); }, []);
 
-  const handleUpdate = async (e: React.FormEvent) => {
+  // Auto-calculate total whenever quantity or unitPrice changes
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      total: prev.quantity * prev.unitPrice
+    }));
+  }, [formData.quantity, formData.unitPrice]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editing) return;
-
     try {
-      await api.put(`/sales/update/${editing._id}`, {
-        productName: product,
-        quantity: Number(quantity),
-        total: Number(total),
+      const res = await api.post("/sales/create", {
+        productName: formData.productName,
+        quantity: Number(formData.quantity),
+        total: Number(formData.total),
       });
 
-      setSales((prev) =>
-        prev.map((s) =>
-          s._id === editing._id
-            ? {
-                ...s,
-                productName: product,
-                quantity: Number(quantity),
-                total: Number(total),
-              }
-            : s,
-        ),
-      );
-      setEditing(null);
+      if (res.data.success) {
+        setSales([res.data.data, ...sales]);
+        alert("Sale Recorded Successfully!");
+        closeModal();
+      }
     } catch (err: any) {
-      console.error("Update failed:", err.message);
+      alert("Error: " + (err.response?.data?.message || "Failed to save sale"));
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFormData({ productName: "", quantity: 1, unitPrice: 0, total: 0 });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this sale record?")) return;
+    try {
+      await api.delete(`/sales/delete/${id}`);
+      setSales(sales.filter((s) => s._id !== id));
+    } catch (err) { console.error(err); }
   };
 
   return (
     <ProtectedRoute allowedRoles={["admin", "manager", "saler"]}>
-      <div className="p-6">
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-500">Total Sales</h2>
-              <p className="text-2xl font-bold">{sales.length}</p>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* HEADER SECTION */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FaShoppingCart className="text-teal-600" /> Sales Management
+              </h1>
+              <p className="text-gray-500 text-sm font-medium">Track your daily transactions</p>
             </div>
-            <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-500">Total Revenue</h2>
-              <p className="text-2xl font-bold">
-                ${sales.reduce((a, b) => a + b.total, 0)}
-              </p>
-            </div>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-lg transition-all active:scale-95"
+            >
+              <FaPlus /> New Sale
+            </button>
           </div>
-        </div>
 
-        <div className="bg-white shadow-md rounded-xl overflow-hidden">
-          <table className="min-w-full border-collapse">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">
-                  Product
-                </th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">
-                  Quantity
-                </th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">
-                  Total
-                </th>
-                <th className="p-3 text-center text-sm font-semibold text-gray-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sales.map((s) => (
-                <tr
-                  key={s._id}
-                  className="border-t bg-white hover:bg-blue-50 transition"
-                >
-                  <td className="p-3 font-medium">{s.productName}</td>
-                  <td className="p-3">{s.quantity}</td>
-                  <td className="p-3">${s.total}</td>
-                  <td className="p-3 text-center space-x-2">
-                    {["admin", "manager"].includes(role) && (
-                      <>
-                        <button
-                          onClick={() => handleEdit(s)}
-                          className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(s._id)}
-                          className="bg-slate-500 text-white px-3 py-1 rounded hover:bg-slate-600"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {sales.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-4 text-center text-gray-500">
-                    No sales available
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        {editing && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
-              <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-                Edit Sale
-              </h2>
-              <form onSubmit={handleUpdate} className="space-y-3">
-                <input
-                  type="text"
-                  value={product}
-                  onChange={(e) => setProduct(e.target.value)}
-                  className="border p-2 w-full rounded"
-                  required
-                />
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) =>
-                    setQuantity(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="border p-2 w-full rounded"
-                  required
-                />
-                <input
-                  type="number"
-                  value={total}
-                  onChange={(e) =>
-                    setTotal(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  className="border p-2 w-full rounded"
-                  required
-                />
-                <div className="flex justify-end gap-2 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => setEditing(null)}
-                    className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Update
-                  </button>
-                </div>
-              </form>
+          {/* SALES TABLE */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Product Name</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Qty</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total Amount</th>
+                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loading ? (
+                    <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-medium italic">Syncing sales data...</td></tr>
+                  ) : sales.length === 0 ? (
+                    <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-medium italic">No sales recorded yet.</td></tr>
+                  ) : (
+                    sales.map((s) => (
+                      <tr key={s._id} className="hover:bg-teal-50/30 transition-colors">
+                        <td className="p-4 text-sm text-gray-500">
+                          {new Date(s.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="p-4">
+                          <p className="font-bold text-gray-800">{s.productName}</p>
+                        </td>
+                        <td className="p-4 text-sm font-bold text-gray-600">
+                          {s.quantity}
+                        </td>
+                        <td className="p-4 text-sm font-bold text-teal-600">
+                          Rs. {s.total.toLocaleString()}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex justify-center gap-4">
+                            <button className="text-teal-600 hover:text-teal-800 transition-colors"><FaEdit size={16} /></button>
+                            <button onClick={() => handleDelete(s._id)} className="text-red-500 hover:text-red-700 transition-colors"><FaTrash size={16} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
+
+          {/* NEW SALE MODAL */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+                <div className="bg-teal-600 p-4 text-white font-bold text-lg flex items-center gap-2">
+                  <FaMoneyBillWave /> Record New Sale
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Product Name</label>
+                    <input type="text" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Enter product name" required />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Quantity</label>
+                      <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Unit Price (Rs)</label>
+                      <input type="number" value={formData.unitPrice} onChange={(e) => setFormData({...formData, unitPrice: Number(e.target.value)})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" required />
+                    </div>
+                  </div>
+
+                  <div className="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                    <p className="text-xs font-bold text-teal-600 uppercase mb-1">Total Bill</p>
+                    <p className="text-2xl font-black text-teal-700">Rs. {formData.total.toLocaleString()}</p>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button type="button" onClick={closeModal} className="flex-1 bg-gray-100 text-gray-600 py-2.5 rounded-lg font-bold">Cancel</button>
+                    <button type="submit" className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg font-bold hover:bg-teal-700 shadow-md">
+                      Confirm Sale
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
     </ProtectedRoute>
   );

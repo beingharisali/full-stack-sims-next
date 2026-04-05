@@ -1,197 +1,216 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { FaPlus, FaBox, FaTruck, FaMapMarkerAlt, FaEdit, FaTrash } from "react-icons/fa";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
 
-type InventoryItem = {
+// Model ke mutabiq Interface
+interface InventoryItem {
   _id: string;
-  product: string;
-  quantity: number;
-  category: string;
+  productName: string;
   description: string;
+  category: string;
   price: number;
   supplier: string;
+  quantity: number;
   location: string;
-};
+}
 
 export default function InventoryPage() {
-  const router = useRouter();
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [editItem, setEditItem] = useState<InventoryItem | null>(null);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        const res = await api.get("/inventory/get");
-        if (res.data.success) {
-          const backendItems = res.data.data.map((item: any) => ({
-            _id: item._id,
-            product: item.productName,
-            quantity: item.quantity,
-            category: item.category,
-            description: item.description,
-            price: item.price,
-            supplier: item.supplier,
-            location: item.location,
-          }));
-          setItems(backendItems);
-        }
-      } catch (err: any) {
-        console.error("Error fetching inventory:", err.message);
-      }
-    };
+  // Form State (As per your Mongoose Schema)
+  const [formData, setFormData] = useState({
+    productName: "",
+    description: "",
+    category: "",
+    price: 0,
+    supplier: "",
+    quantity: 0,
+    location: "warehouse",
+  });
 
-    fetchInventory();
-  }, []);
-
-  const handleDelete = async (_id: string) => {
+  const fetchInventory = async () => {
     try {
-      await api.delete(`/inventory/delete/${_id}`);
-      setItems((prev) => prev.filter((i) => i._id !== _id));
-    } catch (err: any) {
-      console.error("Delete failed:", err.message);
+      setLoading(true);
+      const res = await api.get("/inventory/get");
+      if (res.data.success) setInventory(res.data.data || []);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleUpdate = async () => {
-    if (!editItem) return;
+  useEffect(() => { fetchInventory(); }, []);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await api.put(`/inventory/update/${editItem._id}`, {
-        productName: editItem.product,
-        quantity: editItem.quantity,
-        supplier: editItem.supplier,
-        price: editItem.price,
-        location: editItem.location,
-      });
-
-      setItems((prev) =>
-        prev.map((i) => (i._id === editItem._id ? editItem : i)),
-      );
-      setEditItem(null);
+      if (editingId) {
+        const res = await api.put(`/inventory/update/${editingId}`, formData);
+        if (res.data.success) {
+          setInventory(inventory.map((item) => (item._id === editingId ? res.data.data : item)));
+          alert("Inventory updated successfully!");
+        }
+      } else {
+        const res = await api.post("/inventory/create", formData);
+        if (res.data.success) {
+          setInventory([res.data.data, ...inventory]);
+          alert("Item added to inventory!");
+        }
+      }
+      closeModal();
     } catch (err: any) {
-      console.error("Update failed:", err.message);
+      alert("Error: " + (err.response?.data?.message || "Validation failed"));
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setFormData({ productName: "", description: "", category: "", price: 0, supplier: "", quantity: 0, location: "warehouse" });
+  };
+
+  const handleEdit = (item: InventoryItem) => {
+    setEditingId(item._id);
+    setFormData({
+      productName: item.productName,
+      description: item.description,
+      category: item.category || "",
+      price: item.price,
+      supplier: item.supplier,
+      quantity: item.quantity,
+      location: item.location || "warehouse",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      await api.delete(`/inventory/delete/${id}`);
+      setInventory(inventory.filter((item) => item._id !== id));
+    } catch (err) { console.error(err); }
   };
 
   return (
     <ProtectedRoute allowedRoles={["admin", "manager"]}>
-      <div className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-500">Total Products</h2>
-              <p className="text-2xl font-bold">{items.length}</p>
-            </div>
-            <div className="bg-white p-4 shadow rounded">
-              <h2 className="text-gray-500">Total Stock</h2>
-              <p className="text-2xl font-bold">
-                {items.reduce((a, b) => a + b.quantity, 0)}
-              </p>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <FaBox className="text-teal-600" /> Inventory Management
+            </h1>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-lg transition-transform active:scale-95"
+            >
+              <FaPlus /> Add New Stock
+            </button>
+          </div>
+
+          {/* Inventory Table */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    {["Product & Description", "Supplier", "Qty", "Price", "Location", "Actions"].map((th) => (
+                      <th key={th} className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{th}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loading ? (
+                    <tr><td colSpan={6} className="p-10 text-center text-gray-400">Loading inventory data...</td></tr>
+                  ) : (
+                    inventory.map((item) => (
+                      <tr key={item._id} className="hover:bg-teal-50/30 transition-colors group">
+                        <td className="p-4">
+                          <p className="font-bold text-gray-800">{item.productName}</p>
+                          <p className="text-xs text-gray-400 truncate max-w-[200px]">{item.description}</p>
+                        </td>
+                        <td className="p-4 text-sm flex items-center gap-2 text-gray-600">
+                          <FaTruck className="text-gray-300" /> {item.supplier}
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.quantity > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {item.quantity} units
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm font-bold text-teal-600">Rs. {item.price.toLocaleString()}</td>
+                        <td className="p-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1 uppercase"><FaMapMarkerAlt /> {item.location}</span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEdit(item)} className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg"><FaEdit /></button>
+                            <button onClick={() => handleDelete(item._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><FaTrash /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <button
-            onClick={() => router.push("/inventory/add")}
-            className="bg-teal-600 text-white px-4 py-3 rounded hover:bg-teal-700"
-          >
-            Add Products
-          </button>
-        </div>
-
-        <div className="overflow-x-auto bg-white shadow rounded">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left">Product</th>
-                <th className="px-4 py-2 text-left">Stock</th>
-                <th className="px-4 py-2 text-left">Category</th>
-                <th className="px-4 py-2 text-left">Description</th>
-                <th className="px-4 py-2 text-left">Location</th>
-                <th className="px-4 py-2 text-left">Price</th>
-                <th className="px-4 py-2 text-left">Supplier</th>
-                <th className="px-4 py-2 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item._id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-2">{item.product}</td>
-                  <td className="px-4 py-2">{item.quantity}</td>
-                  <td className="px-4 py-2">{item.category}</td>
-                  <td className="px-4 py-2">{item.description}</td>
-                  <td className="px-4 py-2">{item.location}</td>
-                  <td className="px-4 py-2">{item.price}</td>
-                  <td className="px-4 py-2">{item.supplier}</td>
-                  <td className="px-4 py-2 space-x-2 text-center">
-                    <button
-                      onClick={() => setEditItem(item)}
-                      className="bg-teal-600 text-white px-2 py-1 rounded"
-                    >
-                      Edit
+          {/* Modal Form */}
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+                <div className="bg-teal-600 p-4 text-white font-bold text-lg">
+                  {editingId ? "Edit Stock Item" : "Add New Stock Item"}
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-4">
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Product Name</label>
+                    <input type="text" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" required />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Description (3-150 chars)</label>
+                    <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" rows={2} required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Category</label>
+                    <input type="text" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" placeholder="e.g. Parts" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Supplier</label>
+                    <input type="text" value={formData.supplier} onChange={(e) => setFormData({...formData, supplier: e.target.value})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Price (Rs.)</label>
+                    <input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: Number(e.target.value)})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Quantity</label>
+                    <input type="number" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" required />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Warehouse Location</label>
+                    <input type="text" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full border border-gray-200 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500" />
+                  </div>
+                  <div className="col-span-2 flex gap-3 pt-4 border-t">
+                    <button type="button" onClick={closeModal} className="flex-1 bg-gray-100 text-gray-600 py-2.5 rounded-lg font-bold">Cancel</button>
+                    <button type="submit" className="flex-1 bg-teal-600 text-white py-2.5 rounded-lg font-bold hover:bg-teal-700 shadow-md">
+                      {editingId ? "Update Item" : "Save Item"}
                     </button>
-                    <button
-                      onClick={() => handleDelete(item._id)}
-                      className="bg-slate-500 text-white px-2 py-1 rounded"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {editItem && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="bg-white w-105 p-6 rounded shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Edit Inventory</h2>
-
-              <input
-                className="border p-2 w-full mb-3 rounded"
-                value={editItem.product}
-                onChange={(e) =>
-                  setEditItem({ ...editItem, product: e.target.value })
-                }
-              />
-
-              <input
-                type="number"
-                className="border p-2 w-full mb-3 rounded"
-                value={editItem.quantity}
-                onChange={(e) =>
-                  setEditItem({ ...editItem, quantity: Number(e.target.value) })
-                }
-              />
-
-              <input
-                className="border p-2 w-full mb-4 rounded"
-                value={editItem.location}
-                onChange={(e) =>
-                  setEditItem({ ...editItem, location: e.target.value })
-                }
-              />
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setEditItem(null)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdate}
-                  className="bg-green-600 text-white px-4 py-2 rounded"
-                >
-                  Update
-                </button>
+                  </div>
+                </form>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </ProtectedRoute>
   );

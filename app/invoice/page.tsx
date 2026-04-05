@@ -1,263 +1,217 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { FaPlus, FaFileInvoiceDollar, FaTrash, FaEye, FaEdit, FaPrint, FaFilePdf, FaTimes, FaFlask } from "react-icons/fa";
+import { useReactToPrint } from "react-to-print";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import ProtectedRoute from "../components/protectedroutes";
 import api from "../utils/api";
 
-interface InvoiceItem {
-  productId?: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-interface CreatedBy {
-  _id?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
-
-interface Invoice {
-  _id: string;
-  customer_name: string;
-  customer_email: string;
-  items: InvoiceItem[];
-  subtotal: number;
-  tax_amount: number;
-  discount_amount: number;
-  total_amount: number;
-  status: string;
-  createdAt: string;
-  createdBy?: string | CreatedBy;
-  createdByName?: string | null;
-}
-
-function createdByLabel(
-  invoice: Pick<Invoice, "createdByName" | "createdBy">,
-): string {
-  if (invoice.createdByName && invoice.createdByName.trim())
-    return invoice.createdByName;
-  const createdBy = invoice.createdBy;
-  if (!createdBy) return "—";
-  if (typeof createdBy === "string") return createdBy;
-  const c = createdBy as CreatedBy;
-  if (c.firstName || c.lastName)
-    return [c.firstName, c.lastName].filter(Boolean).join(" ");
-  if (c.email) return c.email;
-  return c._id ? String(c._id) : "—";
-}
-
 export default function InvoicePage() {
   const router = useRouter();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
+  
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      setError("");
       const res = await api.get("/invoice");
-      if (res.data.success) {
-        setInvoices(res.data.data);
-      } else {
-        setError(res.data.message || "Failed to fetch invoices");
-      }
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "response" in err
-          ? (
-              err as {
-                response?: { data?: { message?: string }; message?: string };
-              }
-            ).response?.data?.message
-          : err instanceof Error
-            ? err.message
-            : "Server error";
-      setError(String(msg));
-    } finally {
-      setLoading(false);
-    }
+      if (res.data.success) setInvoices(res.data.data || []);
+    } catch (err: any) { console.error("Error fetching"); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
+  useEffect(() => { fetchInvoices(); }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this invoice?")) return;
-    try {
-      setLoading(true);
-      const res = await api.delete(`/invoice/${id}`);
-      if (res.data.success) {
-        setInvoices(invoices.filter((inv) => inv._id !== id));
-      } else {
-        setError(res.data.message || "Failed to delete invoice");
-      }
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { message?: string } } }).response
-              ?.data?.message
-          : err instanceof Error
-            ? err.message
-            : "Server error";
-      setError(String(msg));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `PARAGON_INV_${selectedInvoice?.invoice_number}`,
+  });
 
-  const handleDownload = async (invoice: Invoice) => {
-    const html2pdf = (await import("html2pdf.js")).default;
-
-    const element = document.createElement("div");
-
-    element.innerHTML = `
-    <div style="padding:20px; font-family: Arial; width: 800px;">
-      
-      <h2 style="text-align:center;">INVOICE</h2>
-      <hr/>
-
-      <p><strong>Customer:</strong> ${invoice.customer_name}</p>
-      <p><strong>Email:</strong> ${invoice.customer_email}</p>
-      <p><strong>Status:</strong> ${invoice.status}</p>
-
-      <br/>
-
-      <table style="width:100%; border-collapse: collapse;" border="1">
-        <thead>
-          <tr>
-            <th style="padding:8px;">Description</th>
-            <th style="padding:8px;">Qty</th>
-            <th style="padding:8px;">Unit Price</th>
-            <th style="padding:8px;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${invoice.items
-            .map(
-              (item) => `
-              <tr>
-                <td style="padding:8px;">${item.description}</td>
-                <td style="padding:8px; text-align:center;">${item.quantity}</td>
-                <td style="padding:8px; text-align:right;">Rs. ${item.unit_price}</td>
-                <td style="padding:8px; text-align:right;">Rs. ${item.total_price}</td>
-              </tr>
-            `,
-            )
-            .join("")}
-        </tbody>
-      </table>
-
-      <br/>
-
-      <div style="text-align:right;">
-        <h3>Total: Rs. ${invoice.total_amount}</h3>
-      </div>
-
-    </div>
-  `;
-
-    html2pdf()
-      .set({
-        margin: 10,
-        filename: `Invoice-${invoice._id}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      })
-      .from(element)
-      .save();
+  const downloadPDF = async () => {
+    const element = contentRef.current;
+    if (!element) return;
+    const canvas = await html2canvas(element, { scale: 3 });
+    const data = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Paragon_Invoice_${selectedInvoice?.invoice_number}.pdf`);
   };
 
   return (
-    <ProtectedRoute allowedRoles={["admin", "manager", "saler"]}>
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-semibold text-center sm:text-left">
-            All Invoices
-          </h1>
-          <button
-            type="button"
-            onClick={() => router.push("/invoice/add")}
-            className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 font-medium shrink-0"
-          >
-            Add Invoice
-          </button>
-        </div>
-
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-        {loading ? (
-          <p className="text-center">Loading invoices...</p>
-        ) : invoices.length === 0 ? (
-          <p className="text-center">No invoices found.</p>
-        ) : (
-          <div className="space-y-6">
-            {invoices.map((invoice) => (
-              <div
-                key={invoice._id}
-                className="border rounded p-4 shadow-sm hover:shadow-md transition"
-              >
-                <div className="flex justify-between mb-2">
-                  <div>
-                    <p>
-                      <span className="font-semibold">Customer:</span>{" "}
-                      {invoice.customer_name} ({invoice.customer_email})
-                    </p>
-                    <p>
-                      <span className="font-semibold">Status:</span>{" "}
-                      {invoice.status}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Created by: {createdByLabel(invoice)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p>
-                      <span className="font-semibold">Total:</span> Rs.{" "}
-                      {invoice.total_amount}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Created: {new Date(invoice.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-2">
-                  <p className="font-semibold mb-1">Items:</p>
-                  <ul className="list-disc list-inside">
-                    {invoice.items.map((item, idx) => (
-                      <li key={idx}>
-                        {item.description} - Qty: {item.quantity} | Unit: Rs.{" "}
-                        {item.unit_price} | Total: Rs. {item.total_price}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mt-3 flex justify-end gap-3">
-                  <button
-                    onClick={() => handleDownload(invoice)}
-                    className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700"
-                  >
-                    Download
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(invoice._id)}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+    <ProtectedRoute allowedRoles={["admin", "manager"]}>
+      <div className="p-6 bg-[#fcfcfc] min-h-screen font-sans">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8 border-b pb-5">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2 uppercase tracking-tighter">
+                <FaFlask className="text-teal-600" /> Paragon Laboratories
+              </h1>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]">Billing Management</p>
+            </div>
+            <button onClick={() => router.push("/invoice/add")} className="bg-teal-600 text-white px-10 py-5 rounded-2xl text-x font-bold hover:bg-teal-600 shadow-xl transition-all flex items-center gap-2">
+              <FaPlus /> New Invoice
+            </button>
           </div>
-        )}
+
+          {/* Table */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  <th className="p-5">Invoice #</th>
+                  <th className="p-5">Customer</th>
+                  <th className="p-5">Status</th>
+                  <th className="p-5">Total Amount</th>
+                  <th className="p-5 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {loading ? (
+                  <tr><td colSpan={5} className="p-20 text-center text-slate-300 italic font-medium">Syncing invoices...</td></tr>
+                ) : invoices.map((inv) => (
+                  <tr key={inv._id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <td className="p-5 font-bold text-slate-700">{inv.invoice_number}</td>
+                    <td className="p-5 text-slate-500 font-medium">{inv.customer_name}</td>
+                    <td className="p-5">
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase ${inv.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="p-5 font-bold text-teal-700">Rs. {inv.total_amount.toLocaleString()}</td>
+                    <td className="p-5 flex justify-center gap-5">
+                      <button onClick={() => { setSelectedInvoice(inv); setShowModal(true); }} className="text-slate-400 hover:text-teal-600 transition-all transform hover:scale-110"><FaEye size={18} /></button>
+                      <button onClick={() => router.push(`/invoice/edit/${inv._id}`)} className="text-slate-400 hover:text-blue-500 transition-all transform hover:scale-110"><FaEdit size={18} /></button>
+                      <button className="text-slate-300 hover:text-rose-500 transition-all transform hover:scale-110"><FaTrash size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* --- MODERN CENTERED PREVIEW MODAL --- */}
+          {showModal && selectedInvoice && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+              <div className="bg-white w-[60%] max-h-[95vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300">
+                
+                {/* Modal Header */}
+                <div className="p-5 border-b flex justify-between items-center bg-slate-50/50">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Official Document</span>
+                  <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all"><FaTimes size={18} /></button>
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto p-12 bg-[#f1f5f9]">
+                  <div ref={contentRef} className="bg-white p-12 shadow-2xl rounded-sm mx-auto border border-slate-100 relative min-h-[1000px]">
+                    
+                    {/* Centered INVOICE Title */}
+                    <div className="text-center mb-10">
+                        <h1 className="text-5xl font-black text-slate-100 absolute left-0 right-0 top-10 opacity-40 uppercase tracking-[0.5em] -z-0">INVOICE</h1>
+                        <div className="relative z-10">
+                            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Paragon Laboratories</h2>
+                            <div className="w-16 h-1 bg-teal-500 mx-auto mt-2 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    {/* Top Details */}
+                    <div className="flex justify-between items-start mt-16 mb-12 border-b-2 border-slate-900 pb-8">
+                      <div>
+                        <h3 className="text-[10px] font-black text-teal-600 uppercase tracking-widest mb-3">Client Information</h3>
+                        <p className="text-lg font-bold text-slate-800 leading-none">{selectedInvoice.customer_name}</p>
+                        <p className="text-xs text-slate-400 font-medium mt-2">{selectedInvoice.customer_email}</p>
+                      </div>
+                      <div className="text-right">
+                        <h3 className="text-[10px] font-black text-teal-600 uppercase tracking-widest mb-3">Invoice Details</h3>
+                        <p className="text-sm font-bold text-slate-800"># {selectedInvoice.invoice_number}</p>
+                        <p className="text-[11px] text-slate-400 font-medium mt-1">{new Date(selectedInvoice.createdAt).toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'})}</p>
+                      </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <table className="w-full text-left mb-10">
+                      <thead>
+                        <tr className="border-b-2 border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                          <th className="py-4">Service Description</th>
+                          <th className="py-4 text-center">Qty</th>
+                          <th className="py-4 text-right">Unit Price</th>
+                          <th className="py-4 text-right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-xs">
+                        {selectedInvoice.items?.map((item: any, i: number) => (
+                          <tr key={i} className="border-b border-slate-50">
+                            <td className="py-5 font-bold text-slate-700 uppercase tracking-tighter">{item.description}</td>
+                            <td className="py-5 text-center text-slate-500 font-medium">{item.quantity}</td>
+                            <td className="py-5 text-right text-slate-500 font-medium">Rs. {item.unit_price.toLocaleString()}</td>
+                            <td className="py-5 text-right font-black text-slate-900">Rs. {item.total_price.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {/* Financial Breakdown */}
+                    <div className="flex justify-end pt-10">
+                      <div className="w-72 space-y-3">
+                        <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span>Subtotal</span>
+                          <span className="text-slate-800">Rs. {selectedInvoice.subtotal?.toLocaleString() || "0"}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] font-bold text-rose-400 uppercase tracking-widest">
+                          <span>Discount</span>
+                          <span>- Rs. {selectedInvoice.discount_amount?.toLocaleString() || "0"}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] font-bold text-blue-500 uppercase tracking-widest">
+                          <span>Sales Tax</span>
+                          <span>+ Rs. {selectedInvoice.tax_amount?.toLocaleString() || "0"}</span>
+                        </div>
+                        <div className="flex justify-between text-lg font-black text-white bg-slate-900 p-5 rounded-2xl italic mt-6 shadow-xl shadow-slate-100">
+                          <span className="tracking-tighter">GRAND TOTAL</span>
+                          <span>Rs. {selectedInvoice.total_amount?.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer Notes */}
+                    <div className="mt-24 border-t border-slate-100 pt-8 grid grid-cols-2 gap-10">
+                      <div>
+                        <h4 className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-3">Terms & Conditions</h4>
+                        <p className="text-[10px] text-slate-400 leading-relaxed font-medium italic">
+                          {selectedInvoice.notes || "This is a digital receipt of Paragon Laboratories. Payment is due within 15 days of invoice date."}
+                        </p>
+                      </div>
+                      <div className="text-right flex flex-col items-end justify-end">
+                         <div className="w-32 h-px bg-slate-200 mb-2"></div>
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Authorized Signature</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="p-6 border-t bg-white flex gap-5">
+                  <button onClick={() => handlePrint()} className="flex-1 bg-slate-100 text-slate-800 py-4 rounded-[2rem] font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3 border border-slate-200">
+                    <FaPrint size={14} /> Print Document
+                  </button>
+                  <button onClick={downloadPDF} className="flex-1 bg-teal-600 text-white py-4 rounded-[2rem] font-black text-[11px] uppercase tracking-widest hover:bg-teal-700 shadow-xl shadow-teal-100 transition-all flex items-center justify-center gap-3">
+                    <FaFilePdf size={14} /> Download PDF
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
     </ProtectedRoute>
   );
